@@ -99,8 +99,10 @@ def main():
         sys.exit(1)
 
     data["source"] = "live"
-    data["asOf"] = datetime.now(IST).strftime("%Y-%m-%d")
-    data["note"] = "NSE closing prices and fundamentals via Yahoo Finance. Refreshed after market close."
+    now = datetime.now(IST)
+    data["asOf"] = now.strftime("%Y-%m-%d")
+    data["asOfTime"] = now.strftime("%H:%M")
+    data["note"] = "NSE prices and fundamentals via Yahoo Finance. Refreshed every 30 minutes in market hours and after close."
     PATH.write_text(json.dumps(data, separators=(",", ":")))
     print(f"Refreshed {ok} items. Failures: {len(failed)}")
     for f in failed:
