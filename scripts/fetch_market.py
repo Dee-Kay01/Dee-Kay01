@@ -56,6 +56,18 @@ def refresh_quote(item, ticker):
         item["w"] = w[-52:]
 
 
+def refresh_long(item, ticker):
+    """3- and 5-year yearly returns from monthly closes."""
+    hist = yf.Ticker(ticker).history(period="6y", interval="1mo", auto_adjust=True)
+    closes = [c for c in (clean(v) for v in hist["Close"].tolist()) if c]
+    if len(closes) < 37:
+        return
+    last = closes[-1]
+    item["r3"] = round(((last / closes[-37]) ** (1 / 3) - 1) * 100, 1)
+    if len(closes) >= 61:
+        item["r5"] = round(((last / closes[-61]) ** (1 / 5) - 1) * 100, 1)
+
+
 def refresh_fundamentals(item, ticker):
     info = yf.Ticker(ticker).info or {}
     pairs = {
@@ -83,9 +95,10 @@ def mf_refresh(data, failed):
     ok = 0
     ua = {"User-Agent": "Mozilla/5.0 (kosh-data-bot)"}
 
-    def good(name, q, ex=()):
+    def good(name, q, ex=(), fof=False):
         name = name.lower()
-        return not any(x in name for x in ex) and all(x in name for x in q) and "direct" in name and "growth" in name and not any(x in name for x in ("idcw", "dividend", "bonus", " etf", "fund of fund", "segregated"))
+        bad = ("idcw", "dividend", "bonus", "segregated") + (() if fof else (" etf", "fund of fund"))
+        return not any(x in name for x in ex) and all(x in name for x in q) and "direct" in name and "growth" in name and not any(x in name for x in bad)
 
     for f in funds:
         code = None
@@ -93,7 +106,7 @@ def mf_refresh(data, failed):
             res = requests.get("https://api.mfapi.in/mf/search", params={"q": f.get("sq") or " ".join(f["q"])}, headers=ua, timeout=30).json()
             f["cands"] = [r.get("schemeName", "") for r in res[:6]]
             for r in res:
-                if good(r.get("schemeName", ""), f["q"], f.get("x", ())):
+                if good(r.get("schemeName", ""), f["q"], f.get("x", ()), f.get("cat") == "Gold"):
                     code, f["scheme"] = str(r["schemeCode"]), r["schemeName"]
                     break
         except Exception as e:
@@ -104,7 +117,7 @@ def mf_refresh(data, failed):
                     txt = requests.get("https://www.amfiindia.com/spages/NAVAll.txt", headers=ua, timeout=60).text
                     rows = [r.split(";") for r in txt.splitlines() if r.count(";") >= 5]
                 for r in rows:
-                    if good(r[3], f["q"], f.get("x", ())):
+                    if good(r[3], f["q"], f.get("x", ()), f.get("cat") == "Gold"):
                         code, f["scheme"] = r[0].strip(), r[3].strip()
                         break
             except Exception as e:
@@ -114,7 +127,7 @@ def mf_refresh(data, failed):
             try:
                 meta = requests.get(f"https://api.mfapi.in/mf/{f['code']}", headers=ua, timeout=60).json().get("meta", {})
                 nm = meta.get("scheme_name", "")
-                if good(nm, f["q"], f.get("x", ())) or (all(x in nm.lower() for x in f["q"]) and "direct" in nm.lower() and not any(x in nm.lower() for x in f.get("x", ()))):
+                if good(nm, f["q"], f.get("x", ()), f.get("cat") == "Gold") or (all(x in nm.lower() for x in f["q"]) and "direct" in nm.lower() and not any(x in nm.lower() for x in f.get("x", ()))):
                     code, f["scheme"] = str(f["code"]), nm
                 else:
                     failed.append(f"MF {f['k']}: code {f['code']} is '{nm}'")
@@ -165,6 +178,8 @@ def mf_refresh(data, failed):
 def main():
     data = json.loads(PATH.read_text())
     ok, failed = 0, []
+    today = datetime.now(IST).strftime("%Y-%m-%d")
+    long_due = data.get("longAsOf") != today
     for idx in data["indices"]:
         try:
             refresh_quote(idx, INDEX_TICKERS.get(idx["s"], idx["s"]))
@@ -183,6 +198,20 @@ def main():
             refresh_fundamentals(st, ticker)
         except Exception as e:
             failed.append(f"{st['s']} fundamentals: {e}")
+        if long_due:
+            try:
+                refresh_long(st, ticker)
+            except Exception as e:
+                failed.append(f"{st['s']} long: {e}")
+
+    if long_due:
+        for idx in data["indices"]:
+            if idx["s"] in ("NIFTY", "SENSEX", "BANKNIFTY"):
+                try:
+                    refresh_long(idx, INDEX_TICKERS[idx["s"]])
+                except Exception as e:
+                    failed.append(f"{idx['s']} long: {e}")
+        data["longAsOf"] = today
 
     for et in data.get("etfs", []):
         try:
