@@ -83,9 +83,9 @@ def mf_refresh(data, failed):
     ok = 0
     ua = {"User-Agent": "Mozilla/5.0 (kosh-data-bot)"}
 
-    def good(name, q):
+    def good(name, q, ex=()):
         name = name.lower()
-        return all(x in name for x in q) and "direct" in name and "growth" in name and not any(x in name for x in ("idcw", "dividend", "bonus", " etf", "fund of fund", "segregated"))
+        return not any(x in name for x in ex) and all(x in name for x in q) and "direct" in name and "growth" in name and not any(x in name for x in ("idcw", "dividend", "bonus", " etf", "fund of fund", "segregated"))
 
     for f in funds:
         code = None
@@ -93,7 +93,7 @@ def mf_refresh(data, failed):
             res = requests.get("https://api.mfapi.in/mf/search", params={"q": f.get("sq") or " ".join(f["q"])}, headers=ua, timeout=30).json()
             f["cands"] = [r.get("schemeName", "") for r in res[:6]]
             for r in res:
-                if good(r.get("schemeName", ""), f["q"]):
+                if good(r.get("schemeName", ""), f["q"], f.get("x", ())):
                     code, f["scheme"] = str(r["schemeCode"]), r["schemeName"]
                     break
         except Exception as e:
@@ -104,7 +104,7 @@ def mf_refresh(data, failed):
                     txt = requests.get("https://www.amfiindia.com/spages/NAVAll.txt", headers=ua, timeout=60).text
                     rows = [r.split(";") for r in txt.splitlines() if r.count(";") >= 5]
                 for r in rows:
-                    if good(r[3], f["q"]):
+                    if good(r[3], f["q"], f.get("x", ())):
                         code, f["scheme"] = r[0].strip(), r[3].strip()
                         break
             except Exception as e:
@@ -114,7 +114,7 @@ def mf_refresh(data, failed):
             try:
                 meta = requests.get(f"https://api.mfapi.in/mf/{f['code']}", headers=ua, timeout=60).json().get("meta", {})
                 nm = meta.get("scheme_name", "")
-                if all(x in nm.lower() for x in f["q"]) and "direct" in nm.lower():
+                if good(nm, f["q"], f.get("x", ())) or (all(x in nm.lower() for x in f["q"]) and "direct" in nm.lower() and not any(x in nm.lower() for x in f.get("x", ()))):
                     code, f["scheme"] = str(f["code"]), nm
                 else:
                     failed.append(f"MF {f['k']}: code {f['code']} is '{nm}'")
