@@ -636,6 +636,7 @@ SC.home=()=>{
     h+=`<section class="sec"><div class="hrow"><h2 class="h2">Your stocks today</h2><button class="link" data-a="go" data-v="holdings">All holdings</button></div><div class="list">${top.map(x=>{const k=BY[x.s];return `<button class="item" data-a="go" data-v="stock:${x.s}"><div class="grow"><div class="t">${x.s}</div><div class="d">${x.q} shares · ${inr(x.q*k.p,0)}</div></div><div class="r"><div class="s15 b ${k.c>=0?'up':'down'}">${sinr(x.q*k.c)}</div><div class="s12">${sp(k.cp)}</div></div></button>`}).join('')}</div></section>`}
   const w=S.watch.filter(x=>!held(x)).slice(0,4);
   if(w.length)h+=`<section class="sec"><div class="hrow"><h2 class="h2">Watchlist</h2><span class="s12 muted">Tap ☆ on any stock</span></div><div class="list">${w.map(x=>stockRow(x)).join('')}</div></section>`;
+  h+=homeSB();
   return {body:h,nav:true,now:'Home answers four questions in the first view: how is my money, what needs me now (one card), what do I usually do (five shortcuts that learn from use, plus All), and how is the market (one line). No Buy buttons in lists: tap a row, buy on the stock page.'};
 };
 const FCATS=['All','Index','Large cap','Flexi cap','Large & mid','Mid cap','Small cap','Tax saver','Hybrid','Debt','Gold','Sector'];
@@ -744,7 +745,7 @@ SC.explore=()=>{
   const n=NIFTY(),sx=D.indices.find(x=>x.s==='SENSEX');
   let h=`<div class="pad" style="padding-top:16px;display:flex;flex-direction:column;gap:12px"><label class="search" for="q">${I.explore}<input id="q" data-in="q" placeholder="Search stocks, funds, IPOs" value="${esc(S.q)}" autocomplete="off"></label>
    <div class="mkt"><div><span class="s12 muted">NIFTY 50</span><span class="s15 bb">${num(n.p)} <span class="s12">${sp(n.cp)}</span></span></div><div><span class="s12 muted">SENSEX</span><span class="s15 bb">${num(sx.p)} <span class="s12">${sp(sx.cp)}</span></span></div><span style="margin-left:auto">${closed('short')}</span></div></div>
-   ${S.q?'':`<section class="sec" style="margin-top:4px">${[['Invest',[['buy','trend','Stocks'],['lump','pie','Mutual funds'],['sip','sip','SIP'],['ssip','repeat','Stock SIP']]],['Save and borrow',[['fd','bank','FD'],['liquid','drop','Liquid fund'],['loan','loan','Loans'],['mtf','pct','MTF']]],['Discover',[['adv','bulb','AI advisor'],['ideas','star','Expert ideas'],['algo','repeat','Algos'],['us','globe','US stocks'],['etf','grid','ETFs'],['bask','basket','Baskets'],['learn','text','Learn'],['wealth','shield','Wealth']]],['Your money',[['money','wallet','Money check'],['refer','gift','Refer'],['add','add','Add money'],['withdraw','out','Withdraw']]]].map(g=>`<span class="s13 b muted">${g[0]}</span><div class="grp">${g[1].map(a=>`<button data-a="act" data-v="${a[0]}"><span class="ic">${I[a[1]]}</span>${a[2]}</button>`).join('')}</div>`).join('')}<span class="s12 muted">Futures, options, commodities and algos are in the Trade tab.</span></section>`}
+   ${S.q?'':`<section class="sec" style="margin-top:4px">${[['Invest',[['buy','trend','Stocks'],['lump','pie','Mutual funds'],['sip','sip','SIP'],['ssip','repeat','Stock SIP']]],['Discover',[['adv','bulb','AI advisor'],['ideas','star','Expert ideas'],['algo','repeat','Algos'],['us','globe','US stocks'],['etf','grid','ETFs'],['bask','basket','Baskets'],['liquid','drop','Liquid fund'],['wealth','shield','Wealth']]],['Your money',[['money','wallet','Money check'],['refer','gift','Refer'],['add','add','Add money'],['withdraw','out','Withdraw']]]].map(g=>`<span class="s13 b muted">${g[0]}</span><div class="grp">${g[1].map(a=>`<button data-a="act" data-v="${a[0]}"><span class="ic">${I[a[1]]}</span>${a[2]}</button>`).join('')}</div>`).join('')}<span class="s12 muted">FDs, loans and MTF are under Save &amp; borrow on Home. Futures, options and commodities are in Trade.</span></section>`}
    <div id="xbody">${exploreBody()}</div>`;
   const nC=S.cmp.ids.length,cf=nC&&(S.cmp.t==='mf'?S.xsec==='funds':S.xsec==='stocks')?`<button class="btn full" style="flex:0 0 96px" data-a="cmpclear">Clear</button><button class="btn full pri" data-a="go" data-v="cmp" ${nC<2?'disabled':''}>${nC<2?'Pick 1 more to compare':'Compare '+nC+(S.cmp.t==='mf'?' funds':' stocks')}</button>`:'';
   return {body:h,nav:!cf,foot:cf||undefined,now:'Invest: every product in one place. One search, product groups, then browse Buffett-style stocks, movers, funds, ETFs, baskets, US stocks and IPOs.'};
@@ -965,7 +966,7 @@ SH.plan=()=>{const st=S.pstep||0;
   <button class="btn full pri" data-a="planact">${I.sip}Start these SIPs</button>`};
 function planSplit(id,amt){const g=k=>id.find(x=>x.k===k).v/100;const round=v=>Math.max(100,Math.round(v/100)*100);return [{id:'n50',a:round(amt*(g('idx')+g('stk')))},{id:'liquid',a:round(amt*g('debt'))},{id:'gold',a:round(amt*g('gold'))}].filter(x=>x.a>0)}
 const ACTS=[['buy','trend','Stocks'],['fno','bolt','F&amp;O'],['cmd','coin','Commodity'],['lump','pie','Mutual funds'],['sip','sip','SIP'],['ssip','repeat','Stock SIP'],['fd','bank','FD'],['ipos','tag','IPO'],['refer','gift','Refer'],['more','grid','More']];
-const MORE=[['act','liquid','drop','Liquid fund'],['act','mtf','pct','MTF'],['act','loan','loan','Loans'],['act','money','wallet','Money check'],['xgo','etf','grid','ETFs'],['xgo','baskets','basket','Baskets'],['xgo','us','globe','US stocks'],['tvgo','algo','repeat','Algos'],['tvgo','strat','pie','Option strategies'],['act','ins','sparkle','Ask Kosh'],['sheet','add','add','Add money'],['sheet','withdraw','out','Withdraw']];
+const MORE=[['act','liquid','drop','Liquid fund'],['act','sb','bank','Save & borrow'],['act','learn','text','Learn'],['act','money','wallet','Money check'],['xgo','etf','grid','ETFs'],['xgo','baskets','basket','Baskets'],['xgo','us','globe','US stocks'],['tvgo','algo','repeat','Algos'],['tvgo','strat','pie','Option strategies'],['act','ins','sparkle','Ask Kosh'],['sheet','add','add','Add money'],['sheet','withdraw','out','Withdraw']];
 function actsUI(){return `<div class="acts" role="group" aria-label="What would you like to do">${ACTS.map(a=>`<button data-a="act" data-v="${a[0]}"><span class="ic">${I[a[1]]}</span>${a[2]}</button>`).join('')}</div>`}
 SH.more=()=>`<h2>Everything else</h2><div class="acts" style="grid-template-columns:repeat(4,minmax(0,1fr));margin:4px 0 0">${MORE.map(a=>`<button data-a="${a[0]}" data-v="${a[1]}"><span class="ic">${I[a[2]]}</span>${a[3]}</button>`).join('')}</div>`;
 SH.cmd=()=>{const X=S.cx;return `<h2>Commodities</h2><p>MCX small contracts \u00b7 ${cmdExp()} expiry \u00b7 prices indicative from global markets</p><div class="list">${CMDS.map((c,i)=>{const q=cq(i);return `<button class="item" data-a="cxpick" data-v="${i}" style="${X&&X.i===i?'background:var(--accent-soft)':''}"><span class="lic">${I.coin}</span><div class="grow"><div class="t">${c.n}</div><div class="d">per ${c.u} \u00b7 lot ${c.lot} ${c.u}</div></div><div class="r"><div class="s15 b">${inr(q.p,0)}</div><div class="s12">${sp(q.cp)}</div></div></button>`}).join('')}</div>${X?cmdOrder():''}`};
@@ -1426,7 +1427,7 @@ SH.mybk=()=>{const pool=[...new Set([...S.mybk,...S.stocks.map(h=>h.s),...S.watc
 
 /* ---- how-to answers for Ask Kosh ---- */
 function HOWTO(){return [
- [/\bfds?\b|fixed deposit/,'Book an FD in two taps: Invest, then <strong>FD</strong>. Pick the bank, years and amount, see what you get back, then slide. Insured up to ₹5 lakh per bank.',[['Book an FD','act','fd']]],
+ [/\bfds?\b|fixed deposit/,'Book an FD from Home: <strong>Save &amp; borrow</strong>, then FD. Pick the bank, years and amount, see what you get back, then slide. Insured up to ₹5 lakh per bank.',[['Book an FD','act','fd']]],
  [/stock sip/,'A stock SIP buys a fixed amount, or a fixed number of shares, of one stock every week or month. Open any stock and tap <strong>SIP</strong>, or go to Invest, then Stock SIP.',[['Start a stock SIP','act','ssip']]],
  [/basket/,'A basket buys a group of stocks in one go, once or every month. Pick a ready one or make your own.',[['See baskets','xgo','baskets'],['Make my own','sheet','mybk']]],
  [/report|tax|capital gain|statement|itr|p&l|ledger|contract note/,'The <strong>Reports</strong> tab: profit and loss, capital gains for your ITR, tradebook, ledger, contract notes, and an estimate of the tax on your gains.',[['Open reports','tab','reports']]],
@@ -1493,7 +1494,7 @@ Object.assign(A,{
 });
 
 /* ---------- patch11: AI advisor, expert ideas, learn, wealth ---------- */
-const _act=A.act;A.act=v=>{const M={adv:()=>go('advisory'),ideas:()=>go('ideas'),algo:()=>A.tvgo('algo'),us:()=>A.xgo('us'),etf:()=>A.xgo('etf'),bask:()=>A.xgo('baskets'),learn:()=>go('learn'),wealth:()=>go('wealth')};if(M[v]){$('toast').hidden=true;M[v]();return}_act(v)};
+const _act=A.act;A.act=v=>{const M={sb:()=>go('sb'),adv:()=>go('advisory'),ideas:()=>go('ideas'),algo:()=>A.tvgo('algo'),us:()=>A.xgo('us'),etf:()=>A.xgo('etf'),bask:()=>A.xgo('baskets'),learn:()=>go('learn'),wealth:()=>go('wealth')};if(M[v]){$('toast').hidden=true;M[v]();return}_act(v)};
 const IDEAS=[
  {id:'i_comp',n:'Steady compounders',by:'A. Mehta, Kosh Research',risk:'Moderate',hz:'5+ years',rule:'Businesses that have grown profits for a decade with little debt. Hold through cycles; reviewed every quarter.',syms:['HDFCBANK','TCS','ASIANPAINT','PIDILITIND','TITAN','NESTLEIND']},
  {id:'i_def',n:'Defence and capital goods',by:'R. Iyer, Kosh Research',risk:'High',hz:'3+ years',rule:'Government orders for defence, rail and power equipment are at record highs. Prices are rich, so add slowly.',syms:['HAL','BEL','BDL','MAZDOCK','SIEMENS','ABB']},
@@ -1586,6 +1587,31 @@ Object.assign(A,{
   goalsave:()=>{const g=S.gx,sip=Math.max(100,Math.round(sipFor(g.amt,g.yrs,g.r)/100)*100);S.goals=[...(S.goals||[]),{...g,sip}];S.gx=null;const id=g.yrs<=3?'liquid':g.r>=12?'flexi':'icibaf';S.pick={mode:'sip',id:FUND[id]?id:'n50',amt:sip};render();sheet('pick')},
   goalsip:v=>{const g=S.goals[+v],id=g.yrs<=3?'liquid':g.r>=12?'flexi':'icibaf';S.pick={mode:'sip',id:FUND[id]?id:'n50',amt:g.sip};sheet('pick')}
 });
+
+/* ---------- patch12: Save & borrow and Learn as their own spaces ---------- */
+function homeSB(){const fdBest=Math.max(...FDS.map(b=>b.r[1])),lim=lasLimit(),done=(S.learned||[]).length,all=LEARN.reduce((a,m)=>a+m[2].length,0),owe=S.loans.reduce((a,x)=>a+x.amt,0)+(S.mtfLoan||0);
+  return `<section class="sec"><div class="hrow"><h2 class="h2">Save &amp; borrow</h2><button class="link" data-a="go" data-v="sb">See all</button></div>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+   <button class="card stack" data-a="act" data-v="fd" style="gap:2px;text-align:left;padding:12px;color:var(--fg)"><span class="lic">${I.bank}</span><span class="s14 b">FD</span><span class="s12 muted">Up to ${fdBest}%</span></button>
+   <button class="card stack" data-a="act" data-v="loan" style="gap:2px;text-align:left;padding:12px;color:var(--fg)"><span class="lic">${I.loan}</span><span class="s14 b">Loans</span><span class="s12 muted">${lim>=10000?'Up to '+cpt(lim):'From 10.5%'}</span></button>
+   <button class="card stack" data-a="act" data-v="mtf" style="gap:2px;text-align:left;padding:12px;color:var(--fg)"><span class="lic">${I.pct}</span><span class="s14 b">MTF</span><span class="s12 muted">Buy up to 4×</span></button></div>
+  ${owe?`<span class="s12 muted">You owe ${inr(owe,0)} across loans and MTF.</span>`:''}</section>
+  <section class="sec"><button class="card hrow" data-a="act" data-v="learn" style="text-align:left;color:var(--fg)"><span class="row" style="gap:12px"><span class="lic">${I.text}</span><span><span class="s15 b" style="display:block">Learn in 2 minutes</span><span class="s13 muted">${done?done+' of '+all+' lessons done':'Shares, funds, risk, tax and planning'}</span></span></span>${chevI}</button></section>`}
+SC.sb=()=>{const lim=lasLimit(),fds=S.fds,owe=S.loans,mtf=S.mtfLoan||0;
+  const row=(ic,t,d,rate,a,v,btn)=>`<div class="item"><span class="lic">${I[ic]}</span><div class="grow"><div class="t">${t}</div><div class="d">${d}</div></div><div class="r" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="s14 b">${rate}</span><button class="btn sm" data-a="${a}" data-v="${v}">${btn}</button></div></div>`;
+  return {body:`${top('Save &amp; borrow')}
+  <section class="pad"><span class="s14">Kept apart from investing on purpose: saving should be safe, and borrowing should be a choice you see clearly.</span></section>
+  <section class="sec" style="margin-top:12px"><span class="s13 b muted">Save</span><div class="list">
+   ${FDS.map((b,i)=>row('bank','FD · '+b.b.replace('Sample ',''),'Insured up to ₹5 lakh · 1 to 5 years',`${b.r[1]}% · 1 yr`,'act','fd','Book')).join('')}
+   ${row('drop','Liquid fund','Withdraw any day · no lock-in',FUND.liquid?rv(FUND.liquid.r['1Y'])+' · 1 yr':'—','act','liquid','Invest')}</div>
+   ${fds.length?`<span class="s13 b muted" style="margin-top:6px">Your FDs</span><div class="list">${fds.map(x=>`<div class="item"><span class="lic ok">${I.bank}</span><div class="grow"><div class="t">${inr(x.amt,0)} · ${x.bank}</div><div class="d">${x.rate}% · ${x.ten} yr · gets ${inr(x.mat,0)}</div></div></div>`).join('')}</div>`:''}</section>
+  <section class="sec"><span class="s13 b muted">Borrow</span><div class="list">
+   ${row('loan','Loan against investments',lim>=10000?`Up to ${cpt(lim)} · keep your investments`:'Invest more to unlock','10.5% a year','act','loan','Check')}
+   ${row('loan','Personal loan','₹50,000 to ₹10 lakh · 1 to 5 years','From 14% a year','act','loan','Check')}
+   ${row('pct','MTF: buy shares with borrowed money','Pay a part, borrow the rest · shares held as security','13.99% a year','act','mtf','Use')}</div>
+   ${owe.length||mtf?`<span class="s13 b muted" style="margin-top:6px">What you owe</span><div class="list">${owe.map(l=>`<div class="item"><span class="lic warn">${I.loan}</span><div class="grow"><div class="t">${inr(l.amt,0)} · ${l.type==='las'?'Against investments':'Personal'}</div><div class="d">EMI ${inr(l.emi,0)} · ${l.rate}% a year</div></div></div>`).join('')}${mtf?`<div class="item"><span class="lic warn">${I.pct}</span><div class="grow"><div class="t">${inr(mtf,0)} · MTF</div><div class="d">Interest ${inr(mtf*0.1399/365,0)} a day until you repay or sell</div></div></div>`:''}</div>`:''}
+   <span class="s12 muted">Borrowing raises both gains and losses. Every rate, fee and EMI is shown before you agree.</span></section>`,
+  now:'Save & borrow: FDs and liquid fund to save; loan against investments, personal loan and MTF to borrow, each with its rate and what you owe. Kept out of Invest.'}};
 
 init('investor');render(true);
 fetch('data/market.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.stocks&&j.indices){D=j;index();buildFunds();render()}}).catch(()=>{});
