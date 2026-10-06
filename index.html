@@ -77,6 +77,7 @@ button{cursor:pointer}
 .stabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 12px;border-bottom:1px solid var(--line)}
 .stabs::-webkit-scrollbar,.spills::-webkit-scrollbar{display:none}
 .stabs button{flex:none;height:42px;padding:0 10px;border:0;background:none;font-size:14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;border-radius:0}
+#modes .btn{padding-left:6px;padding-right:6px;white-space:nowrap;min-width:0}#modes .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
 .stabs button[aria-pressed="true"]{color:var(--fg);border-bottom-color:var(--accent)}
 .spills{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px}
 .spills button{flex:none;height:34px;padding:0 12px 0 10px;border-radius:17px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:5px;white-space:nowrap}
@@ -330,11 +331,11 @@ details.tot .rows{padding-top:8px;display:flex;flex-direction:column;gap:6px}
   </div>
   <aside class="panel" aria-label="About this prototype">
     <h1>Kosh</h1>
-    <p class="lede">Four tabs, one account. Home shows your money, the one thing that needs you, five shortcuts that learn from your use, and the market in one line. Icons with one word, defaults instead of questions, and insights that tell you what to do next.</p>
+    <p class="lede">Five tabs, one account, three skins. The same app changes what Home leads with depending on who is using it: a first-time investor, an SIP and stock investor, or an active F&amp;O and algo trader.</p>
     <div class="pbox">
-      <h2>One account, every product</h2>
-      <p class="fine" style="font-size:13px">This sample user has funds, stocks, an SIP and F&amp;O positions. Nothing is split by user type: Home shows what the account holds, and every product is one tap from Home or a tab.</p>
-      <div class="g2"><button class="btn sm" data-a="mode" data-v="investor">Sample account</button><button class="btn sm" data-a="mode" data-v="new">Empty account</button></div>
+      <h2>Pick a skin</h2>
+      <p class="fine" style="font-size:13px"><b>New investor</b>: an empty account, a ₹100 start and a setup checklist. <b>Investor</b>: funds, stocks and SIPs, returns vs NIFTY. <b>Active trader</b>: P&amp;L, margin, positions, algos and the Pro scalper first. Every product stays one tap away in all three; you can also switch from Profile.</p>
+      <div class="g2" id="modes" style="grid-template-columns:repeat(3,1fr);gap:8px"><button class="btn sm" data-a="mode" data-v="new">New investor</button><button class="btn sm" data-a="mode" data-v="investor">Investor</button><button class="btn sm" data-a="mode" data-v="trader">Active trader</button></div>
     </div>
     <div class="pbox" aria-live="polite"><h2>On screen</h2><p class="now" id="now"></p></div>
     <div class="pbox">
@@ -559,7 +560,7 @@ let S={};
 function init(mode){
   S={mode,tab:'home',stack:[],sheet:null,lang:'en',ts:1,simple:false,xsec:'foryou',cmp:{t:null,ids:[]},fcat:'All',fsort:'3Y',ssec:'All',sf:{},ssort:'mc',fper:'3Y',mover:'up',range:'1Y',period:'3Y',q:'',oid:10,plan:null,pa:{},
     watch:['ITC','HDFCBANK','TCS','TITAN'],orders:[],sips:[],bids:{},fds:[],ssips:[],aa:false,pick:null,pos:[],algos:[],dll:5000,maxl:5,realized:0,margin:0,fnoAck:false,tv:'chain',oc:{u:'NIFTY',ei:-1},st:'bcs',slots:1,chat:[],alerts:[],mtfLoan:0,loans:[],pay:{m:'upi',app:'GPay',bank:0},mand:'upi',bmode:'once',mybk:[],fy:'2026-27',pper:'1Y',hq:'',faq:-1,mstmt:true,tickets:[],wl:0,wsort:'',ipot:'live',usv:'stocks',advt:'long',mtfa:25000,mtfl:4,notify:[],claimed:[],etfc:'All'};
-  if(mode==='investor'){
+  if(mode==='investor'||mode==='trader'){
     Object.assign(S,{cash:125000,
       stocks:[{s:'ICICIBANK',q:20,avg:1180},{s:'ITC',q:60,avg:240},{s:'INFY',q:12,avg:1100}],
       funds:[{id:'flexi',val:47300,inv:41000},{id:'n50',val:2400,inv:2000}],
@@ -567,7 +568,7 @@ function init(mode){
     S.orders=[{id:3,type:'ipo',ipo:'rk',st:'mandate',when:'Today, 1:10 AM'},{id:2,type:'sip',fund:'flexi',amt:2000,day:10,st:'active'},
       {id:1,type:'stock',side:'buy',sym:'ICICIBANK',q:5,price:1310.60,total:6579.15,st:'done',when:'3 Oct, 10:42 AM'}];
   } else Object.assign(S,{cash:0,stocks:[],funds:[]});
-  if(mode==='investor'){S.fnoAck=true;S.pos=samplePos();S.algos=[{id:'ma',cap:50000,mode:'paper',dl:1000}];S.orders.unshift({id:++S.oid,label:'Algo \u00b7 Moving average trend',detail:'Paper trading \u00b7 \u20b950,000',icon:'repeat',st:'paper',la:'tvgo',lv:'algo'})}
+  if(mode==='trader'){Object.assign(S,{cash:500000,dll:10000,maxl:10,stocks:[{s:'ICICIBANK',q:20,avg:1180}],funds:[{id:'n50',val:2400,inv:2000}],sips:[],bids:{},realized:6240,tv:'pro'});S.orders=S.orders.filter(o=>o.type==='stock');S.fnoAck=true;S.pos=samplePos();S.algos=[{id:'orb',cap:150000,mode:'live',dl:3000},{id:'str920',cap:250000,mode:'paper',dl:5000}];S.orders.unshift({id:++S.oid,label:'Algo \u00b7 Opening range breakout',detail:'Live \u00b7 \u20b91,50,000',icon:'repeat',st:'running',la:'tvgo',lv:'algo'},{id:++S.oid,label:'Algo \u00b7 9:20 short straddle',detail:'Paper trading \u00b7 \u20b92,50,000',icon:'repeat',st:'paper',la:'tvgo',lv:'algo'})}
 }
 const held=s=>S.stocks.find(h=>h.s===s);
 function port(){
@@ -656,7 +657,7 @@ function smart(){const c=[],loss=Math.max(0,-dayPnl()),left=S.dll-loss;
   if(S.bids.rk&&S.bids.rk.st==='mandate')c.push({ic:'tag',t:'Approve your IPO bid',d:'Rk Fashion · closes 7 Oct, 5 PM',btn:'Approve',a:'ipo',v:'rk'});
   if(S.mode==='new'&&!S.sips.length)c.push({ic:'sip',t:'Make your first investment',d:'A ₹100 index fund SIP takes two taps',btn:'Start SIP',a:'act',v:'sip'});
   alerts().forEach(x=>c.push(x));return c}
-SC.home=()=>{
+SC.home=()=>{if(S.mode==='new')return newHome();if(S.mode==='trader')return traderHome();
   const p=port(),hr=ist().getHours(),greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening',fpl=dayPnl(),hasFO=S.pos.length||S.realized;
   const sday=S.stocks.reduce((a,x)=>a+x.q*BY[x.s].c,0),fday=p.day-sday,tday=p.day+(hasFO?fpl:0);
   let h=`<div class="pad" style="padding-top:14px"><div class="hrow"><div><div class="s13 muted" style="white-space:nowrap">${greet}</div><div class="s15 bb" style="white-space:nowrap">Your money</div></div><div class="row hdr" style="gap:2px;flex-wrap:nowrap"><button class="inspill" data-a="tab" data-v="insights" aria-label="Insights: ${insN()} new">${I.bulb}Insights${insN()?`<span class="badge">${insN()}</span>`:''}</button><button class="avatar" data-a="go" data-v="profile" aria-label="Profile and help">D</button></div></div></div>`;
@@ -671,13 +672,12 @@ SC.home=()=>{
   h+=`<div class="sc" role="group" aria-label="Your shortcuts">${shortcuts().map(k=>`<button data-a="act" data-v="${k}"><span class="ic">${I[SCD[k][0]]}</span>${SCD[k][1]}</button>`).join('')}<button data-a="tab" data-v="explore"><span class="ic">${I.grid}</span>All</button></div>`;
   const n=IDX('NIFTY'),sx=D.indices.find(x=>x.s==='SENSEX')||n,b=IDX('BANKNIFTY');
   h+=`<button class="pulse" data-a="xgo" data-v="movers" aria-label="Markets: NIFTY ${spx(n.cp)}, SENSEX ${spx(sx.cp)}, Bank Nifty ${spx(b.cp)}. Open market movers">${[[n,'NIFTY'],[sx,'SENSEX'],[b,'Bank Nifty']].map(([x,l])=>`<span><span class="s12 muted">${l}</span><span class="s14 b">${sp(x.cp)}</span></span>`).join('')}<span class="s12 b" style="color:${mkt().open?'var(--up)':'var(--warn-fg)'};flex-direction:row;align-items:center;gap:4px"><span aria-hidden="true">●</span>${mkt().open?'Open':'Closed'}</span></button>`;
-    h+=portSection();
-  if(false&&S.stocks.length){const top=[...S.stocks].sort((a,b_)=>Math.abs(b_.q*BY[b_.s].c)-Math.abs(a.q*BY[a.s].c)).slice(0,3);
+    if(S.stocks.length){const top=[...S.stocks].sort((a,b_)=>Math.abs(b_.q*BY[b_.s].c)-Math.abs(a.q*BY[a.s].c)).slice(0,3);
     h+=`<section class="sec"><div class="hrow"><h2 class="h2">Your stocks today</h2><button class="link" data-a="tab" data-v="portfolio">Portfolio</button></div><div class="list">${top.map(x=>{const k=BY[x.s];return `<button class="item" data-a="go" data-v="stock:${x.s}"><div class="grow"><div class="t">${x.s}</div><div class="d">${x.q} shares · ${inr(x.q*k.p,0)}</div></div><div class="r"><div class="s15 b ${k.c>=0?'up':'down'}">${sinr(x.q*k.c)}</div><div class="s12">${sp(k.cp)}</div></div></button>`}).join('')}</div></section>`}
   const w=[];
   if(w.length)h+=`<section class="sec"><div class="hrow"><h2 class="h2">Watchlist</h2><button class="link" data-a="go" data-v="watch">All lists</button></div><div class="list">${w.map(x=>stockRow(x)).join('')}</div></section>`;
   h+=homeLearn();
-  return {body:h,nav:true,now:'Home is also your portfolio: money and how it compares, one thing to do, shortcuts and the market, then Holdings, Insights, Orders, SIPs and Reports as small tabs.  Before: your money and how it compares, one thing to do, your shortcuts, the market in one line and your stocks today. Home answers four questions in the first view: how is my money, what needs me now (one card), what do I usually do (five shortcuts that learn from use, plus All), and how is the market (one line). No Buy buttons in lists: tap a row, buy on the stock page.'};
+  return {body:h,nav:true,now:'Home, trimmed to what matters first: your money and how it compares, one thing to do, your shortcuts, the market in one line and your stocks today. Home answers four questions in the first view: how is my money, what needs me now (one card), what do I usually do (five shortcuts that learn from use, plus All), and how is the market (one line). No Buy buttons in lists: tap a row, buy on the stock page.'};
 };
 const FCATS=['All','Index','Large cap','Flexi cap','Large & mid','Mid cap','Small cap','Tax saver','Hybrid','Debt','Gold','Sector'];
 const cmpBtn=(t,id)=>{const on=S.cmp.t===t&&S.cmp.ids.includes(id);return `<button class="ib" data-a="cmpt" data-v="${t}|${id}" aria-pressed="${on}" aria-label="${on?'Remove from':'Add to'} compare" style="color:${on?'var(--accent)':'var(--muted)'}">${on?I.check:I.add}</button>`};
@@ -945,9 +945,10 @@ SC.profile=()=>{
    ${S.aa?row('link','Bank data via Account Aggregator','<button class="btn sm danger" data-a="revoke">Revoke</button>'):row('link','Link bank for Money check',chevI,'act','money')}
    ${row('gift','Refer a friend',chevI,'act','refer')}
    ${row('receipt','Reports and tax',chevI,'tab','reports')}
+   <div class="item" style="display:block"><div class="t">App view</div><div class="s12 muted" style="margin:2px 0 8px">Changes what Home leads with</div><div class="seg" role="group" aria-label="App view" style="display:flex">${[['new','New investor'],['investor','Investor'],['trader','Trader']].map(([k,l])=>`<button style="flex:1" data-a="skin" data-v="${k}" aria-pressed="${S.mode===k}">${l}</button>`).join('')}</div></div>
    ${row('gift','Rewards and offers',chevI,'go','rewards')}
    ${row('help','Help centre',chevI,'go','help')}
-   ${row('flag','Raise a complaint',chevI,'sheet','complaint')}</div></section>`,now:'Profile, from the avatar: help first, then settings. One account for everything; F&amp;O opens after a one-time risk note.'};
+   ${row('flag','Raise a complaint',chevI,'sheet','complaint')}</div></section>`,now:'Profile, from the avatar: help first, then settings. One account for everything; F&O opens after a one-time risk note.'};
 };
 
 /* ---------- sheets ---------- */
@@ -1191,7 +1192,7 @@ function render(reset){
   scr.innerHTML=`<div class="zoom">${r.body}</div>`;
   $('foot').innerHTML=r.foot||'';$('foot').hidden=!r.foot;if(r.slide)bindSlide(r.slide,'F');
   $('nav').hidden=!r.nav;
-  const L=T[S.lang],tabs=[['home',I.home],['explore',I.pie],['trade',I.bolt],['money',I.wallet]];$('nav').style.gridTemplateColumns=`repeat(${tabs.length},minmax(0,1fr))`;$('nav').innerHTML=tabs.map(([k,ic])=>`<button data-a="tab" data-v="${k}" ${S.tab===k&&!S.stack.length?'aria-current="page"':''}>${ic}${L[k]}${k==='activity'&&S.orders.some(o=>['queued','mandate'].includes(o.st))?'':''}</button>`).join('');
+  const L=T[S.lang],tabs=[['home',I.home],['explore',I.pie],['trade',I.bolt],['portfolio',I.case],['money',I.wallet]];$('nav').style.gridTemplateColumns=`repeat(${tabs.length},minmax(0,1fr))`;$('nav').innerHTML=tabs.map(([k,ic])=>`<button data-a="tab" data-v="${k}" ${S.tab===k&&!S.stack.length?'aria-current="page"':''}>${ic}${L[k]}${k==='activity'&&S.orders.some(o=>['queued','mandate'].includes(o.st))?'':''}</button>`).join('');
   scr.scrollTop=reset?0:y;
   placeToast();
   document.querySelectorAll('.stabs').forEach(t=>{const b=t.querySelector('[aria-pressed="true"]');if(b)t.scrollLeft=Math.max(0,b.offsetLeft-t.clientWidth/2+b.offsetWidth/2)});
@@ -1213,11 +1214,11 @@ function placeToast(){$('toast').style.bottom=(!$('foot').hidden?$('foot').offse
 let tt;function toast(m,act){const e=$('toast');e.innerHTML=`<span>${m}</span>${act?`<button data-a="${act.a}" data-v="${act.v}">${act.l}</button>`:''}`;e.hidden=false;placeToast();clearTimeout(tt);tt=setTimeout(()=>e.hidden=true,act?6000:2600)}
 function go(s,p){S.sheet=null;S.stack.push({s,p});render(true)}
 function sheet(v){S.sheet=v;if(v)$('toast').hidden=true;renderSheet()}
-function jump(id){if((S.tab!=='home'||S.pseg!=='ins')||S.stack.length){S.tab='home';S.pseg='ins';S.stack=[];S.sheet=null;render(true)}const el=$('j-'+id);if(el)$('scr').scrollTo({top:el.offsetTop-8,behavior:'smooth'})}
+function jump(id){if((S.tab!=='portfolio'||S.pseg!=='ins')||S.stack.length){S.tab='portfolio';S.pseg='ins';S.stack=[];S.sheet=null;render(true)}const el=$('j-'+id);if(el)$('scr').scrollTo({top:el.offsetTop-8,behavior:'smooth'})}
 
 /* ---------- actions ---------- */
 const A={
-  tab:v=>{let f=0;if(v==='insights'){S.pseg='ins';f=1}else if(v==='activity'){S.pseg='orders';f=1}else if(v==='reports'){S.pseg='reports';f=1}else if(v==='portfolio'){f=1}if(['insights','activity','reports','portfolio'].includes(v))v='home';S.tab=v;S.stack=[];S.sheet=null;render(true);if(f)pfocus()},
+  tab:v=>{if(v==='insights'){v='portfolio';S.pseg='ins'}else if(v==='activity'){v='portfolio';S.pseg='orders'}else if(v==='reports'){v='portfolio';S.pseg='reports'}else if(v==='portfolio'&&!S.pseg)S.pseg='hold';S.tab=v;S.stack=[];S.sheet=null;render(true)},
   back:()=>{S.stack.pop();S.sheet=null;render(true)},
   go:v=>{const i=v.indexOf(':');go(i<0?v:v.slice(0,i),i<0?undefined:v.slice(i+1))},
   sheet:v=>sheet(v),
@@ -1261,7 +1262,7 @@ const A={
   pans:v=>{const [k,x]=v.split('|');S.pa[k]=x;S.pstep=(S.pstep||0)+1;renderSheet()},
   pback:()=>{S.pstep=Math.max(0,S.pstep-1);renderSheet()},
   pamt:v=>{S.pamt=+v;renderSheet()},
-  planact:()=>{if(!S.plan&&!S.pa.risk){A.plan();return}S.plan={...(S.pa.risk?S.pa:S.plan)};const sp=planSplit(ideal(S.plan),S.pamt||5000);sp.forEach(x=>addSip(x.id,x.a,10));sheet(null);S.tab='home';S.pseg='orders';S.stack=[];render(true);toast(`${sp.length} SIPs started · ${inr(sp.reduce((a,b)=>a+b.a,0),0)}/mo`)},
+  planact:()=>{if(!S.plan&&!S.pa.risk){A.plan();return}S.plan={...(S.pa.risk?S.pa:S.plan)};const sp=planSplit(ideal(S.plan),S.pamt||5000);sp.forEach(x=>addSip(x.id,x.a,10));sheet(null);S.tab='portfolio';S.pseg='orders';S.stack=[];render(true);toast(`${sp.length} SIPs started · ${inr(sp.reduce((a,b)=>a+b.a,0),0)}/mo`)},
   act:v=>{$('toast').hidden=true;if(SCD[v]){S.use=S.use||{};S.use[v]=(S.use[v]||0)+1}
     if(v==='add'){sheet('add');return}
     if(v==='withdraw'){sheet('withdraw');return}
@@ -1278,7 +1279,7 @@ const A={
     if(v==='ipos'){go('ipos');return}
     if(v==='fd'){S.fdx={bank:0,ten:1,amt:50000};sheet('fd')}
     if(v==='money'){if(S.aa)go('money');else{S.aastep=0;sheet('aa')}}
-    if(v==='ins'){S.tab='home';S.pseg='ins';S.stack=[];S.sheet=null;render(true)}
+    if(v==='ins'){S.tab='portfolio';S.pseg='ins';S.stack=[];S.sheet=null;render(true)}
     if(v==='refer')sheet('refer');
   },
   pmode:v=>{S.pick.mode=v;S.pick.amt=0;renderSheet()},
@@ -1347,16 +1348,16 @@ const A={
   restart:()=>{init(S.mode);render(true)},
   try:v=>{
     S.sheet=null;$('toast').hidden=true;
-    if(v==='doing'){if(S.mode==='new')init('investor');S.tab='home';S.pseg='ins';S.stack=[];render(true);return}
-    if(v==='plan'){S.tab='home';S.pseg='ins';S.stack=[];render(true);A.plan();return}
+    if(v==='doing'){if(S.mode==='new')init('investor');S.tab='portfolio';S.pseg='ins';S.stack=[];render(true);return}
+    if(v==='plan'){S.tab='portfolio';S.pseg='ins';S.stack=[];render(true);A.plan();return}
     if(['chain','strat','algo','fut'].includes(v)){S.tab='trade';S.tv=v;S.stack=[];render(true);if(!S.fnoAck)sheet('fno');return}
     if(v==='cmdt'){S.tab='trade';S.tv='cmd';S.stack=[];render(true);A.cxgo('0');return}
-    if(v==='ask'){S.tab='home';S.pseg='ins';S.stack=[];render(true);ask('How is the market today?');return}
+    if(v==='ask'){S.tab='portfolio';S.pseg='ins';S.stack=[];render(true);ask('How is the market today?');return}
     if(v==='basket'||v==='us'){S.tab='explore';S.xsec=v==='basket'?'baskets':'us';S.q='';S.stack=[];render(true);return}
     S.tab='home';S.stack=[];render(true);A.act(v);
   }
 };
-function ask(q){q=(q||'').trim();if(!q)return;const r=answer(q);S.chat.push({me:q},{h:r.h,a:r.a});S.pseg='ins';if((S.tab!=='home'||S.pseg!=='ins')||S.stack.length){S.tab='home';S.pseg='ins';S.stack=[];S.sheet=null}render();const el=document.querySelector('.chat');if(el)$('scr').scrollTo({top:Math.max(0,el.offsetTop-120)})}
+function ask(q){q=(q||'').trim();if(!q)return;const r=answer(q);S.chat.push({me:q},{h:r.h,a:r.a});if((S.tab!=='portfolio'||S.pseg!=='ins')||S.stack.length){S.tab='portfolio';S.pseg='ins';S.stack=[];S.sheet=null}render();const el=document.querySelector('.chat');if(el)$('scr').scrollTo({top:Math.max(0,el.offsetTop-120)})}
 document.addEventListener('submit',e=>{if(e.target.dataset.f==='ask'){e.preventDefault();ask($('askq').value)}});
 function addSip(id,amt,day){if(!S.funds.find(x=>x.id===id))S.funds.push({id,val:0,inv:0,pending:day});S.sips=S.sips.filter(x=>x.id!==id);S.sips.push({id,amt,day});S.orders.unshift({id:++S.oid,type:'sip',fund:id,amt,day,st:'active',fresh:1})}
 document.addEventListener('click',e=>{
@@ -2015,7 +2016,8 @@ function holdBody(){const p=port(),ext=S.ext||[],ev=ext.reduce((a,x)=>a+x.val,0)
   if(hc==='fno')list=S.pos.map(l=>{const pl=legPnl(l);return `<button class="item" data-a="tvgo" data-v="pos"><div class="grow"><div class="t">${legName(l)}</div><div class="d">${l.side==='buy'?'Bought':'Sold'} ${l.lots} lot</div></div><div class="r s15 b ${pl>=0?'up':'down'}">${sinr(pl)}</div></button>`}).join('');
   if(hc==='fd')list=S.fds.map(x=>`<div class="item"><div class="grow"><div class="t">${x.bank}</div><div class="d">${x.rate}% · ${x.ten} yr</div></div><div class="r"><div class="s15 b">${inr(x.amt,0)}</div><div class="s12 muted">gets ${cpt(x.mat)}</div></div></div>`).join('');
   if(hc==='cash')list=`<button class="item" data-a="tab" data-v="money"><div class="grow"><div class="t">Kosh balance</div><div class="d">Add, withdraw and payments in Funding</div></div><div class="r s15 b">${inr(S.cash,0)}</div></button>`;
-  return `  ${cats.length?`<section class="sec" style="margin-top:6px"><div class="spills" role="tablist" aria-label="What you hold">${cats.map(c=>`<button class="${hc===c[0]?'pri':''}" role="tab" aria-selected="${hc===c[0]}" data-a="hcat" data-v="${c[0]}">${c[1]} · ${c[0]==='fno'?sinr(c[2]):cpt(c[2])}</button>`).join('')}</div><div class="list">${list}</div></section>`:'<div class="empty">Nothing here yet. Start with a ₹100 SIP.</div>'}
+  return `<section class="pad stack" style="gap:4px"><span class="big">${inr(p.total+ev,0)}</span><span class="s13"><span class="b ${p.ret>=0?'up':'down'}">${sinr(p.ret)} overall</span><span class="muted"> · invested ${cpt(p.inv)}</span></span>${benchUI()}</section>
+  ${cats.length?`<section class="sec" style="margin-top:10px"><div class="spills" role="tablist" aria-label="What you hold">${cats.map(c=>`<button class="${hc===c[0]?'pri':''}" role="tab" aria-selected="${hc===c[0]}" data-a="hcat" data-v="${c[0]}">${c[1]} · ${c[0]==='fno'?sinr(c[2]):cpt(c[2])}</button>`).join('')}</div><div class="list">${list}</div></section>`:'<div class="empty">Nothing here yet. Start with a ₹100 SIP.</div>'}
   <section class="sec"><button class="link" data-a="sheet" data-v="cas" style="padding:0;min-height:36px;align-self:flex-start">${I.link.replace('<svg','<svg width="16" height="16" style="vertical-align:-3px;margin-right:4px"')}${ext.length?'Refresh funds held elsewhere':'Import funds held elsewhere (CAS)'}</button></section>`}
 function sipsBody(){const mf=S.sips,st=S.ssips,bk=S.orders.filter(o=>o.label&&o.label.startsWith('Basket SIP')&&o.st==='running'),tot=mf.reduce((a,x)=>a+x.amt,0)+st.reduce((a,x)=>a+(x.freq==='weekly'?x.amt*4.33:x.amt),0);
   const ctl=(t,id)=>`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn sm" data-a="sipc" data-v="${t}|${id}|step">${S.stepup&&S.stepup[t+id]?'Step-up on':'Step up 10%/yr'}</button><button class="btn sm" data-a="sipc" data-v="${t}|${id}|skip">Skip next</button><button class="btn sm" data-a="sipc" data-v="${t}|${id}|pause">${S.paused&&S.paused[t+id]?'Resume':'Pause'}</button><button class="btn sm" data-a="sipc" data-v="${t}|${id}|date">Change date</button><button class="btn sm danger" data-a="sipc" data-v="${t}|${id}|stop">Stop</button></div>`;
@@ -2051,7 +2053,7 @@ SC.money=()=>{const blk=S.orders.filter(o=>o.type==='stock'&&o.st==='queued'&&o.
   now:'Funding: the money behind your trades. Balance and withdrawals, borrowing (MTF, loan against investments, personal loan) with what you owe, linked banks, UPI and every AutoPay.'}};
 Object.assign(A,{
   hcat:v=>{S.hcat=v;render()},
-  pseg:v=>{S.pseg=v;render();pfocus()},
+  pseg:v=>{S.pseg=v;render(true)},
   casgo:()=>{S.ext=[{n:'Axis Bluechip Fund',at:'another app',inv:150000,val:171200},{n:'SBI Small Cap Fund',at:'another app',inv:80000,val:104300},{n:'ICICI Pru Liquid Fund',at:'your bank',inv:50000,val:53900}];sheet(null);render();toast('3 funds imported from your CAS')},
   sipc:v=>{const [t,id,op]=v.split('|'),k=t+id;S.paused=S.paused||{};S.skipped=S.skipped||{};S.stepup=S.stepup||{};
     if(op==='step'){S.stepup[k]=!S.stepup[k];toast(S.stepup[k]?'Step-up on: +10% every year':'Step-up off')}
@@ -2227,17 +2229,41 @@ Object.assign(A,{
   pxcancel:()=>{pxInit().pend=[];pxRefresh();toast('Pending orders cancelled')}
 });
 
-/* ---------- patch24: Portfolio lives inside Home ---------- */
-function portInner(){const g=S.pseg||'hold';let inner='';
-  if(g==='hold')inner=holdBody();
-  if(g==='orders')inner=SC.activity().body.replace(/^<div class="pad hrow" style="padding-top:18px"><h1 class="h1">Activity<\/h1>.*?<\/div><\/div>/,'');
-  if(g==='sips')inner=sipsBody();
-  if(g==='ins'){const st=S.stack;S.stack=[];inner=SC.insights().body.replace(/<div class="hrow"><div class="row" style="gap:2px"><button class="ib" data-a="tab" data-v="home".*?<h1 class="h1">Insights<\/h1><\/div>/s,'<div class="hrow">').replace('padding-top:18px;','padding-top:4px;');S.stack=st}
-  if(g==='reports'){const st=S.stack;S.stack=[];inner=SC.reports().body.replace('<div class="pad" style="padding-top:18px"><h1 class="h1">Reports and tax</h1></div>','');S.stack=st}
-  return inner}
-function portSection(){const g=S.pseg||'hold';return `<div class="pad" id="ptabs" style="margin-top:14px"><div class="stabs" role="tablist" aria-label="Your portfolio">${PSEG.map(([k,l])=>`<button role="tab" aria-selected="${g===k}" aria-pressed="${g===k}" data-a="pseg" data-v="${k}">${l}${k==='ins'&&insN()?` <span class="chip" style="font-size:11px;padding:0 6px;background:var(--down);color:#fff">${insN()}</span>`:''}</button>`).join('')}</div></div>${portInner()}`}
-function pfocus(){const el=document.getElementById('ptabs');if(el)$('scr').scrollTo({top:Math.max(0,el.offsetTop-8)})}
-SC.portfolio=()=>SC.home();
+/* ---------- patch25: a separate Home for new and early investors ---------- */
+function newHome(){const L0=LEARN.find(m=>m[0]==='Investing basics')||LEARN[0],li=LEARN.indexOf(L0),done=S.learned||[],first=(S.sips.length||S.funds.length||S.stocks.length||S.fds.length)>0,n=IDX('NIFTY');
+  const starter=Object.values(FUND).find(f=>f.pop&&f.cat==='Index'&&f.min<=100)||FUND.n50,gold=FUND.gold||FUND.sbigold,liq=FUND.liquid;
+  const steps=[['KYC verified','Aadhaar and PAN checked',true,'',''],['Bank linked',BANKS[0].n+' '+BANKS[0].a,true,'',''],['Add money','UPI or net banking, from ₹100',S.cash>0,'sheet','add'],['Make your first investment','A ₹100 SIP takes two taps',first,'fpick','sip|'+starter.k],['Learn the basics','Two 2-minute lessons',done.filter(x=>x.startsWith(li+'.')).length>=2,'sheet','lesson:'+li+'.0'],['Set a goal','See the monthly SIP you need',!!(S.goals&&S.goals.length)||!!S.plan,'sheet','goal']],k=steps.filter(x=>x[2]).length;
+  const card=(t,d,ret,btn,a,v,tone)=>`<div class="card stack" style="gap:6px;padding:14px"><div class="hrow"><span class="s15 b">${t}</span><span class="chip ${tone}">${ret}</span></div><span class="s13 muted">${d}</span><button class="btn sm ${tone==='low'?'pri':''}" data-a="${a}" data-v="${v}" style="align-self:flex-start">${btn}</button></div>`;
+  return {nav:true,body:`<div class="pad" style="padding-top:14px"><div class="hrow"><div><div class="s13 muted">Welcome to Kosh</div><div class="s15 bb">Let’s get you started</div></div><div class="row" style="gap:6px"><button class="ib" data-a="go" data-v="help" aria-label="Help">${I.help}</button><button class="avatar" data-a="go" data-v="profile" aria-label="Profile and help">D</button></div></div></div>
+  <section class="sec" style="margin-top:10px"><div class="card stack" style="gap:10px;background:linear-gradient(135deg,var(--accent),#3b5bdb);color:#fff;border:0;padding:18px"><span class="s13" style="opacity:.85">Your first step</span><span style="font-size:26px;font-weight:800;line-height:1.15">Start investing with ₹100</span><span class="s14" style="opacity:.9">An index fund SIP buys a little of many of India’s biggest companies every month. Stop any time, no charges.</span><button class="btn" data-a="fpick" data-v="sip|${starter.k}" style="align-self:flex-start;background:#fff;color:var(--accent);border:0">Start ₹${starter.min} SIP</button></div></section>
+  <section class="sec"><div class="card stack" style="gap:8px"><div class="hrow"><span class="s15 bb">Your setup</span><span class="s13 b">${k} of ${steps.length} done</span></div><div class="bar"><i style="left:0;width:${k/steps.length*100}%;background:var(--accent)"></i></div>
+   ${steps.map(([t,d,ok,a,v])=>`<div class="check" style="padding:8px 0"><span class="mk ${ok?'yes':''}" style="${ok?'':'border:2px solid var(--line)'}">${ok?I.check:''}</span><div class="grow"><div class="s14 b" style="${ok?'color:var(--muted);text-decoration:line-through':''}">${t}</div><div class="s12 muted">${d}</div></div>${ok?'':`<button class="btn sm" data-a="${a}" data-v="${v}">Do it</button>`}</div>`).join('')}</div></section>
+  ${referStrip()}
+  <section class="sec"><h2 class="h2">Pick a starting point</h2>
+   ${liq?card('Safest: park your money',`A liquid fund. Withdraw any day, no lock-in. Better than a savings account for spare cash.`,rv(liq.r['1Y'])+' last year','Park money','fpick','lump|liquid','mod'):''}
+   ${card('Steady: grow with India',`${starter.s}. Owns big, established companies. Best for 5+ years.`,rv(starter.r['3Y'])+' a year, 3Y','Start SIP','fpick','sip|'+starter.k,'low')}
+   ${gold?card('Cushion: gold',`${gold.s}. Tends to hold up when shares fall.`,rv(gold.r['3Y'])+' a year, 3Y','Add gold','fpick','sip|'+gold.k,'mod'):''}
+   <button class="card hrow" data-a="plan" data-v="" style="text-align:left;color:var(--fg)"><span><span class="s15 b" style="display:block">Not sure? Get a plan in 3 questions</span><span class="s13 muted">Age, when you need the money, how you feel about falls</span></span>${chevI}</button></section>
+  <section class="sec"><div class="hrow"><h2 class="h2">Kosh School: start here</h2><button class="link" data-a="act" data-v="learn">All lessons</button></div><div class="list">${L0[2].slice(0,3).map((l,i)=>{const id=li+'.'+i,ok=done.includes(id);return `<button class="item" data-a="sheet" data-v="lesson:${id}"><span class="lic ${ok?'ok':''}">${ok?I.check:I.text}</span><div class="grow"><div class="t">${l[0]}</div><div class="d">${ok?'Done':'2 min · 1 question'}</div></div>${chevI}</button>`}).join('')}</div></section>
+  <section class="sec"><form class="ask" data-f="ask"><input id="askq" placeholder="Any question? Ask Kosh" aria-label="Ask Kosh" autocomplete="off"><button class="btn sm pri" type="submit">Ask</button></form></section>
+  <section class="sec"><div class="card stack s13" style="gap:6px"><span class="s14 b">Your money is safe with Kosh</span><span>${I.shield.replace('<svg','<svg width="14" height="14" style="vertical-align:-2px;margin-right:6px"')}Shares sit in your own demat account; funds are in your name.</span><span>${I.lock.replace('<svg','<svg width="14" height="14" style="vertical-align:-2px;margin-right:6px"')}Money moves only to and from your own bank account.</span><span>${I.receipt.replace('<svg','<svg width="14" height="14" style="vertical-align:-2px;margin-right:6px"')}₹0 account fee. Every charge shown before you pay.</span></div><span class="s12 muted" style="margin-top:6px">Market today: NIFTY ${num(n.p)} ${spx(n.cp)}</span></section>`,
+  now:'New-investor Home: one clear first step (₹100 SIP), a setup checklist, three starting points from safest to growth, a 3-question plan, the first lessons, Ask Kosh and why your money is safe. No F&O, no clutter.'}}
+Object.assign(A,{skin:v=>{init(v);render(true);toast(v==='new'?'New-investor view':'Experienced view')}});
+
+/* ---------- patch26: Active-trader Home ---------- */
+function traderHome(){const pl=dayPnl(),loss=Math.max(0,-pl),used=Math.min(100,loss/S.dll*100),mg=S.pos.reduce((a,l)=>a+(l.mg||0),0),unr=S.pos.reduce((a,l)=>a+legPnl(l),0),C=chain('NIFTY',-1),atm=C.rows.find(r=>r.k===C.atm),v=IDX('INDIAVIX'),vw=v.w||[],rk=Math.round((v.p-Math.min(...vw,v.p))/((Math.max(...vw,v.p)-Math.min(...vw,v.p))||1)*100);
+  const r=rng(4242);let net=0,wins=0,dn=0;for(let i=0;i<22;i++){const x=Math.round(gauss(r)*2200+150);net+=x;if(x>0)wins++;dn++}
+  return {nav:true,body:`<div class="pad" style="padding-top:14px"><div class="hrow"><div><div class="s13 muted">Trading desk</div><div class="s15 bb">${mkt().open?'Market open':'Market closed'}</div></div><div class="row" style="gap:6px"><button class="inspill" data-a="tvgo" data-v="journal">${I.receipt}Journal</button><button class="avatar" data-a="go" data-v="profile" aria-label="Profile">D</button></div></div></div>
+  <section class="sec" style="margin-top:10px"><div class="card stack" style="gap:10px"><div class="hrow" style="align-items:flex-end"><div><div class="s12 muted">Today’s P&amp;L</div><div class="big ${pl>=0?'up':'down'}">${sinr(pl)}</div><div class="s12 muted">Booked ${sinr(S.realized)} · open ${sinr(unr)}</div></div><div class="r"><div class="s12 muted">Margin free</div><div class="s15 b">${cpt(marginFree())}</div><div class="s12 muted">used ${cpt(mg)}</div></div></div>
+   <div><div class="kv s13" style="margin-bottom:5px"><span class="muted">Daily loss limit</span><button class="link" style="padding:0;min-height:0" data-a="sheet" data-v="dll">${inr(loss,0)} of ${inr(S.dll,0)}</button></div><div class="bar"><i style="left:0;width:${used}%;background:${used>80?'var(--down)':'var(--c4)'}"></i></div></div></div></section>
+  <section class="sec"><div class="spills" role="group" aria-label="Trade">${[['pro','bolt','Pro scalper',1],['chain','grid','Option chain'],['pos','act','Positions'],['algo','repeat','Algos'],['strat','pie','Strategies'],['scan','explore','Scanners'],['charts','spark','Charts']].map(x=>`<button class="${x[3]?'pri':''}" data-a="tvgo" data-v="${x[0]}">${I[x[1]]}${x[2]}</button>`).join('')}</div></section>
+  <div class="pad">${idxStrip()}</div>
+  <section class="sec"><div class="hrow"><h2 class="h2">Open positions · ${S.pos.length}</h2><button class="link" data-a="tvgo" data-v="pos">All</button></div>${S.pos.length?`<div class="list">${S.pos.slice(0,4).map(l=>{const p_=legPnl(l);return `<div class="item"><div class="grow"><div class="t">${legName(l)}</div><div class="d">${l.side==='buy'?'Bought':'Sold'} ${l.lots} lot at ${inr(l.avg)} · now ${inr(r2(legPrice(l)))}</div></div><div class="r s15 b ${p_>=0?'up':'down'}">${sinr(p_)}</div><button class="btn sm" data-a="exit" data-v="${l.id}">Exit</button></div>`}).join('')}</div>`:'<div class="empty">No open positions.</div>'}</section>
+  <section class="sec"><div class="hrow"><h2 class="h2">Algos running</h2><button class="link" data-a="tvgo" data-v="algo">Marketplace</button></div>${S.algos.length?`<div class="list">${S.algos.map(x=>{const a=ALGOS.find(y=>y.id===x.id),tp=((hsh(x.id)%50)-18)*90;return `<div class="item"><span class="lic">${I.repeat}</span><div class="grow"><div class="t">${a.n}</div><div class="d"><span class="chip ${x.mode==='live'?'low':'mod'}" style="font-size:11px;padding:0 6px">${x.mode==='live'?'Live':'Paper'}</span> ${cpt(x.cap)} · stops at −${cpt(x.dl)}/day</div></div><div class="r"><div class="s14 b ${tp>=0?'up':'down'}">${sinr(tp)}</div><div class="s12 muted">today</div></div><button class="btn sm" data-a="algostop" data-v="${x.id}">Stop</button></div>`}).join('')}</div>`:'<div class="empty">No algos running.</div>'}</section>
+  <section class="sec"><button class="card stack" data-a="tvgo" data-v="oi" style="text-align:left;gap:8px;color:var(--fg)"><div class="hrow"><span class="s15 bb">NIFTY options today</span><span class="s12 muted">${C.ex.l} expiry</span></div><div class="g2" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:6px"><div><div class="s12 muted">PCR</div><div class="s14 b">${C.pcr.toFixed(2)}</div></div><div><div class="s12 muted">Max pain</div><div class="s14 b">${num(C.mp,0)}</div></div><div><div class="s12 muted">Straddle</div><div class="s14 b">±${num(atm.c+atm.p,0)}</div></div><div><div class="s12 muted">IV rank</div><div class="s14 b">${rk}</div></div></div><span class="s13">Support ${num(C.sup,0)} · resistance ${num(C.res,0)} · options look ${rk<30?'cheap':rk>70?'expensive':'fairly priced'}.</span></button></section>
+  <section class="sec"><button class="card hrow" data-a="tvgo" data-v="journal" style="text-align:left;color:var(--fg)"><span><span class="s15 b" style="display:block">Your last ${dn} trading days</span><span class="s13 muted">Net <span class="${net>=0?'up':'down'} b">${sinr(net)}</span> · win rate ${Math.round(wins/dn*100)}% · see what to fix</span></span>${chevI}</button></section>
+  ${referStrip()}`,
+  now:'Active-trader Home: today’s P&L, margin and loss limit first, one-tap access to the Pro scalper and chain, open positions with exit, running algos with live P&L and stop, a NIFTY options snapshot and your journal.'}}
 
 LEARN.push(LEARN.shift());
 init('investor');render(true);
