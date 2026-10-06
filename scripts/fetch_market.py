@@ -10,6 +10,9 @@ import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+import bisect
+
+import requests
 import yfinance as yf
 
 PATH = Path(__file__).resolve().parent.parent / "data" / "market.json"
@@ -72,6 +75,63 @@ def refresh_fundamentals(item, ticker):
         item["n"] = name
 
 
+def mf_refresh(data, failed):
+    funds = data.get("mf", [])
+    if not funds:
+        return 0
+    txt = requests.get("https://www.amfiindia.com/spages/NAVAll.txt", timeout=60).text
+    rows = [r.split(";") for r in txt.splitlines() if r.count(";") >= 5]
+    ok = 0
+    for f in funds:
+        code = None
+        for r in rows:
+            name = r[3].lower()
+            if all(q in name for q in f["q"]) and "direct" in name and "growth" in name and not any(x in name for x in ("idcw", "dividend", "bonus", "etf", "fund of fund")):
+                code = r[0].strip()
+                f["scheme"] = r[3].strip()
+                break
+        if not code:
+            failed.append(f"MF {f['k']}: no AMFI match")
+            continue
+        try:
+            hist = requests.get(f"https://api.mfapi.in/mf/{code}", timeout=60).json()["data"]
+            pts = sorted((datetime.strptime(h["date"], "%d-%m-%Y"), float(h["nav"])) for h in hist if float(h["nav"]) > 0)
+            dates = [p[0] for p in pts]
+            last_d, last = pts[-1]
+
+            def nav_at(days):
+                i = bisect.bisect_right(dates, last_d - timedelta(days=days)) - 1
+                return pts[i][1] if i >= 0 else None
+
+            def cagr(years):
+                v = nav_at(round(365.25 * years))
+                if not v or dates[0] > last_d - timedelta(days=round(365.25 * years) - 7):
+                    return None
+                return round(((last / v) ** (1 / years) - 1) * 100, 2) if years > 1 else round((last / v - 1) * 100, 2)
+
+            f["nav"], f["navDate"] = round(last, 4), last_d.strftime("%Y-%m-%d")
+            f["r"] = {"1Y": cagr(1), "3Y": cagr(3), "5Y": cagr(5)}
+            w = [nav_at(7 * i) for i in range(156, -1, -1)]
+            f["w"] = [round(x, 4) for x in w if x]
+            start = last_d - timedelta(days=1096)
+            peak, dd = 0, 0
+            for dte, v in pts:
+                if dte < start:
+                    continue
+                peak = max(peak, v)
+                dd = min(dd, v / peak - 1)
+            f["dd"] = round(dd * 100, 1)
+            m = [nav_at(30 * i) for i in range(36, -1, -1)]
+            rets = [m[i] / m[i - 1] - 1 for i in range(1, len(m)) if m[i] and m[i - 1]]
+            if len(rets) > 6:
+                mu = sum(rets) / len(rets)
+                f["vol"] = round((sum((x - mu) ** 2 for x in rets) / (len(rets) - 1)) ** 0.5 * (12 ** 0.5) * 100, 1)
+            ok += 1
+        except Exception as e:
+            failed.append(f"MF {f['k']}: {e}")
+    return ok
+
+
 def main():
     data = json.loads(PATH.read_text())
     ok, failed = 0, []
@@ -118,6 +178,11 @@ def main():
             data["fx"] = fx
     except Exception as e:
         failed.append(f"USDINR: {e}")
+
+    try:
+        ok += mf_refresh(data, failed)
+    except Exception as e:
+        failed.append(f"MF: {e}")
 
     if ok == 0:
         print("Nothing refreshed; leaving file unchanged.", file=sys.stderr)
