@@ -13,7 +13,7 @@ from pathlib import Path
 import yfinance as yf
 
 PATH = Path(__file__).resolve().parent.parent / "data" / "market.json"
-INDEX_TICKERS = {"NIFTY": "^NSEI", "SENSEX": "^BSESN"}
+INDEX_TICKERS = {"NIFTY": "^NSEI", "SENSEX": "^BSESN", "BANKNIFTY": "^NSEBANK", "FINNIFTY": "NIFTY_FIN_SERVICE.NS", "MIDCPNIFTY": "NIFTY_MID_SELECT.NS", "INDIAVIX": "^INDIAVIX"}
 IST = timezone(timedelta(hours=5, minutes=30))
 
 
@@ -77,7 +77,7 @@ def main():
     ok, failed = 0, []
     for idx in data["indices"]:
         try:
-            refresh_quote(idx, INDEX_TICKERS[idx["s"]])
+            refresh_quote(idx, INDEX_TICKERS.get(idx["s"], idx["s"]))
             ok += 1
         except Exception as e:  # keep previous values
             failed.append(f"{idx['s']}: {e}")
@@ -93,6 +93,25 @@ def main():
             refresh_fundamentals(st, ticker)
         except Exception as e:
             failed.append(f"{st['s']} fundamentals: {e}")
+
+    for et in data.get("etfs", []):
+        try:
+            refresh_quote(et, et["s"] + ".NS")
+            ok += 1
+        except Exception as e:
+            failed.append(f"{et['s']}: {e}")
+    for us in data.get("us", []):
+        try:
+            refresh_quote(us, us["s"])
+            ok += 1
+        except Exception as e:
+            failed.append(f"{us['s']}: {e}")
+    try:
+        fx, _ = last_two_closes("INR=X")
+        if fx:
+            data["fx"] = fx
+    except Exception as e:
+        failed.append(f"USDINR: {e}")
 
     if ok == 0:
         print("Nothing refreshed; leaving file unchanged.", file=sys.stderr)
