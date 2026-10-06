@@ -79,22 +79,41 @@ def mf_refresh(data, failed):
     funds = data.get("mf", [])
     if not funds:
         return 0
-    txt = requests.get("https://www.amfiindia.com/spages/NAVAll.txt", timeout=60).text
-    rows = [r.split(";") for r in txt.splitlines() if r.count(";") >= 5]
+    rows = None
     ok = 0
+    ua = {"User-Agent": "Mozilla/5.0 (kosh-data-bot)"}
+
+    def good(name, q):
+        name = name.lower()
+        return all(x in name for x in q) and "direct" in name and "growth" in name and not any(x in name for x in ("idcw", "dividend", "bonus", " etf", "fund of fund", "segregated"))
+
     for f in funds:
         code = None
-        for r in rows:
-            name = r[3].lower()
-            if all(q in name for q in f["q"]) and "direct" in name and "growth" in name and not any(x in name for x in ("idcw", "dividend", "bonus", "etf", "fund of fund")):
-                code = r[0].strip()
-                f["scheme"] = r[3].strip()
-                break
+        try:
+            res = requests.get("https://api.mfapi.in/mf/search", params={"q": " ".join(f["q"])}, headers=ua, timeout=30).json()
+            for r in res:
+                if good(r.get("schemeName", ""), f["q"]):
+                    code, f["scheme"] = str(r["schemeCode"]), r["schemeName"]
+                    break
+        except Exception as e:
+            failed.append(f"MF search {f['k']}: {e}")
+        if not code:
+            try:
+                if rows is None:
+                    txt = requests.get("https://www.amfiindia.com/spages/NAVAll.txt", headers=ua, timeout=60).text
+                    rows = [r.split(";") for r in txt.splitlines() if r.count(";") >= 5]
+                for r in rows:
+                    if good(r[3], f["q"]):
+                        code, f["scheme"] = r[0].strip(), r[3].strip()
+                        break
+            except Exception as e:
+                failed.append(f"MF amfi {f['k']}: {e}")
+                rows = []
         if not code:
             failed.append(f"MF {f['k']}: no AMFI match")
             continue
         try:
-            hist = requests.get(f"https://api.mfapi.in/mf/{code}", timeout=60).json()["data"]
+            hist = requests.get(f"https://api.mfapi.in/mf/{code}", headers=ua, timeout=60).json()["data"]
             pts = sorted((datetime.strptime(h["date"], "%d-%m-%Y"), float(h["nav"])) for h in hist if float(h["nav"]) > 0)
             dates = [p[0] for p in pts]
             last_d, last = pts[-1]
@@ -188,6 +207,7 @@ def main():
         print("Nothing refreshed; leaving file unchanged.", file=sys.stderr)
         sys.exit(1)
 
+    data["log"] = failed[:60]
     data["source"] = "live"
     now = datetime.now(IST)
     data["asOf"] = now.strftime("%Y-%m-%d")
