@@ -90,7 +90,8 @@ def mf_refresh(data, failed):
     for f in funds:
         code = None
         try:
-            res = requests.get("https://api.mfapi.in/mf/search", params={"q": " ".join(f["q"])}, headers=ua, timeout=30).json()
+            res = requests.get("https://api.mfapi.in/mf/search", params={"q": f.get("sq") or " ".join(f["q"])}, headers=ua, timeout=30).json()
+            f["cands"] = [r.get("schemeName", "") for r in res[:6]]
             for r in res:
                 if good(r.get("schemeName", ""), f["q"]):
                     code, f["scheme"] = str(r["schemeCode"]), r["schemeName"]
