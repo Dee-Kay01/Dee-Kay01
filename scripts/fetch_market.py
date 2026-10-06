@@ -220,7 +220,11 @@ def mf_universe(data, failed):
     if data.get("mfuAsOf") == today.strftime("%Y-%m-%d") and data.get("mfu"):
         return
     ua = {"User-Agent": "Mozilla/5.0 (kosh prototype)"}
-    txt = amfi_get(AMFI_NOW, ua)
+    try:
+        txt = amfi_get(AMFI_NOW, ua)
+    except Exception as e:
+        txt = ""
+        failed.append(f"MFU amfi: {e}")
     rows, cat, sub, amc = [], None, "", ""
     for line in txt.splitlines():
         line = line.strip()
@@ -259,8 +263,8 @@ def mf_universe(data, failed):
             continue
         rows.append([code, name, amc, c, sub, nav])
     if len(rows) < 200:
-        failed.append(f"MFU: only {len(rows)} schemes parsed")
-        return
+        failed.append(f"MFU: AMFI gave {len(rows)} schemes ({len(txt)} chars: {txt[:80]!r}); using mfapi")
+        return mfu_mfapi(data, failed, ua, today)
     past = {}
     for yrs in (1, 3, 5):
         end = today - timedelta(days=round(365.25 * yrs))
@@ -280,6 +284,65 @@ def mf_universe(data, failed):
     data["mfu"] = out
     data["mfuAsOf"] = today.strftime("%Y-%m-%d")
     failed.append(f"MFU ok: {len(out)} schemes, with 1Y {sum(1 for r in out if r[6] is not None)}, 3Y {sum(1 for r in out if r[7] is not None)}, 5Y {sum(1 for r in out if r[8] is not None)}")
+
+
+def cat_of(inner, low):
+    c = next((c for key, c in CATMAP if key in inner), None)
+    if c == "FoF":
+        c = "Gold" if ("gold" in low or "silver" in low) else "Hybrid"
+    if c == "Index" and ("gold" in low or "silver" in low):
+        c = "Gold"
+    sub = inner.split(" - ", 1)[1] if " - " in inner else inner
+    return c, sub.replace(" Fund", "").replace("Index Funds", "Index").strip()
+
+
+def mfu_mfapi(data, failed, ua, today):
+    from concurrent.futures import ThreadPoolExecutor
+    allm = requests.get("https://api.mfapi.in/mf", headers=ua, timeout=90).json()
+    cands = []
+    for m in allm:
+        name = str(m.get("schemeName", ""))
+        low = name.lower()
+        if "direct" not in low or "growth" not in low or any(b in low for b in BADNAME):
+            continue
+        if " etf" in low and "fund of fund" not in low and "fof" not in low:
+            continue
+        cands.append(str(m["schemeCode"]))
+    cutoff = today.replace(tzinfo=None) - timedelta(days=21)
+
+    def one(code):
+        try:
+            j = requests.get(f"https://api.mfapi.in/mf/{code}", headers=ua, timeout=40).json()
+            meta, hist = j.get("meta", {}), j.get("data", [])
+            if not hist or "Open Ended" not in str(meta.get("scheme_type", "")):
+                return None
+            name = meta.get("scheme_name", "")
+            c, sub = cat_of(str(meta.get("scheme_category", "")), name.lower())
+            if not c:
+                return None
+            pts = sorted((datetime.strptime(h["date"], "%d-%m-%Y"), float(h["nav"])) for h in hist if float(h["nav"]) > 0)
+            if not pts or pts[-1][0] < cutoff:
+                return None
+            dates = [x[0] for x in pts]
+            last_d, nav = pts[-1]
+            rr = []
+            for yrs in (1, 3, 5):
+                i = bisect.bisect_right(dates, last_d - timedelta(days=round(365.25 * yrs))) - 1
+                ok = i >= 0 and (last_d - dates[i]).days < 365.25 * yrs + 10
+                rr.append(round(((nav / pts[i][1]) ** (1 / yrs) - 1) * 100, 2) if ok else None)
+            amc = str(meta.get("fund_house", "")).replace(" Mutual Fund", "").strip()
+            return [code, name, amc, c, sub, round(nav, 4)] + rr
+        except Exception:
+            return None
+
+    with ThreadPoolExecutor(max_workers=16) as ex:
+        out = [r for r in ex.map(one, cands) if r]
+    if len(out) < 200:
+        failed.append(f"MFU mfapi: only {len(out)} of {len(cands)} candidates")
+        return
+    data["mfu"] = out
+    data["mfuAsOf"] = today.strftime("%Y-%m-%d")
+    failed.append(f"MFU mfapi ok: {len(out)} of {len(cands)}, 3Y for {sum(1 for r in out if r[7] is not None)}")
 
 
 # ---------- batch prices ----------
@@ -337,7 +400,7 @@ def main():
     def slow(st):
         t = st["s"] + ".NS"
         errs = []
-        if long_due or "pe" not in st and "roe" not in st:
+        if long_due or ("pe" not in st and "roe" not in st) or "mc" not in st:
             try:
                 refresh_fundamentals(st, t)
             except Exception as e:
