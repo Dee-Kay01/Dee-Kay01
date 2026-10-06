@@ -106,6 +106,12 @@ def main():
             ok += 1
         except Exception as e:
             failed.append(f"{us['s']}: {e}")
+    for cm in data.get("cmd", []):
+        try:
+            refresh_quote(cm, cm["y"])
+            ok += 1
+        except Exception as e:
+            failed.append(f"{cm['s']}: {e}")
     try:
         fx, _ = last_two_closes("INR=X")
         if fx:
