@@ -110,6 +110,16 @@ def mf_refresh(data, failed):
             except Exception as e:
                 failed.append(f"MF amfi {f['k']}: {e}")
                 rows = []
+        if not code and f.get("code"):
+            try:
+                meta = requests.get(f"https://api.mfapi.in/mf/{f['code']}", headers=ua, timeout=60).json().get("meta", {})
+                nm = meta.get("scheme_name", "")
+                if all(x in nm.lower() for x in f["q"]) and "direct" in nm.lower():
+                    code, f["scheme"] = str(f["code"]), nm
+                else:
+                    failed.append(f"MF {f['k']}: code {f['code']} is '{nm}'")
+            except Exception as e:
+                failed.append(f"MF code {f['k']}: {e}")
         if not code:
             failed.append(f"MF {f['k']}: no AMFI match")
             continue
