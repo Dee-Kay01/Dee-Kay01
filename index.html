@@ -659,11 +659,10 @@ function smart(){const c=[],loss=Math.max(0,-dayPnl()),left=S.dll-loss;
 SC.home=()=>{
   const p=port(),hr=ist().getHours(),greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening',fpl=dayPnl(),hasFO=S.pos.length||S.realized;
   const sday=S.stocks.reduce((a,x)=>a+x.q*BY[x.s].c,0),fday=p.day-sday,tday=p.day+(hasFO?fpl:0);
-  let h=`<div class="pad" style="padding-top:14px"><div class="hrow"><div><div class="s13 muted" style="white-space:nowrap">${greet}</div><div class="s15 bb" style="white-space:nowrap">Your money</div></div><div class="row hdr" style="gap:2px;flex-wrap:nowrap"><button class="ib" data-a="go" data-v="rewards" aria-label="Rewards and offers: ${rwN()} new">${I.gift}${rwN()?'<span class="dot"></span>':''}</button><button class="ib" data-a="go" data-v="help" aria-label="Help">${I.help}</button><button class="inspill" data-a="tab" data-v="insights" aria-label="Insights: ${insN()} new">${I.bulb}Insights${insN()?`<span class="badge">${insN()}</span>`:''}</button><button class="avatar" data-a="go" data-v="profile" aria-label="Profile and help">D</button></div></div></div>`;
+  let h=`<div class="pad" style="padding-top:14px"><div class="hrow"><div><div class="s13 muted" style="white-space:nowrap">${greet}</div><div class="s15 bb" style="white-space:nowrap">Your money</div></div><div class="row hdr" style="gap:2px;flex-wrap:nowrap"><button class="inspill" data-a="tab" data-v="insights" aria-label="Insights: ${insN()} new">${I.bulb}Insights${insN()?`<span class="badge">${insN()}</span>`:''}</button><button class="avatar" data-a="go" data-v="profile" aria-label="Profile and help">D</button></div></div></div>`;
   if(p.total){const v=S.stocks.length?series():null;
     h+=`<section class="card dash" style="padding:14px"><div class="hrow" style="align-items:flex-end"><div><div class="big">${inr(p.total,0)}</div><div class="s13"><span class="b ${tday>=0?'up':'down'}">${sinr(tday)} today</span><span class="muted"> · </span><span class="b ${p.ret>=0?'up':'down'}">${sinr(p.ret)} overall</span></div></div>${v?`<span class="spark" style="width:84px;flex:none" aria-hidden="true">${sparkSvg(v,46,'')}</span>`:''}</div>
-     <div><button class="link" data-a="bd" aria-expanded="${!!S.bd}" style="padding:0;min-height:32px;display:flex;align-items:center;gap:4px">${S.bd?'Hide breakdown':'Breakdown: stocks, funds, F&amp;O, cash'}<span style="display:inline-flex;transform:rotate(${S.bd?-90:90}deg)">${chevI}</span></button></div>${benchUI()}
-     ${S.bd?`<div class="dt"><button data-a="go" data-v="holdings"><span class="l">Stocks</span><span class="v">${cpt(p.sv)}</span><span class="x ${sday>=0?'up':'down'}">${sinr(sday)}</span></button><button data-a="go" data-v="holdings"><span class="l">Funds</span><span class="v">${cpt(p.fv+p.dv)}</span><span class="x ${fday>=0?'up':'down'}">${sinr(fday)}</span></button><button data-a="tvgo" data-v="pos"><span class="l">F&amp;O</span><span class="v ${fpl>=0?'up':'down'}">${hasFO?sinr(fpl):'—'}</span><span class="x muted">${S.pos.length} open</span></button><button data-a="sheet" data-v="add"><span class="l">Cash</span><span class="v">${cpt(S.cash)}</span><span class="x" style="color:var(--accent)">+ Add</span></button></div>`:''}</section>`}
+     ${benchUI()}</section>`}
   else h+=`<section class="card dash" style="padding:14px"><div class="big">₹0</div><span class="s14 muted">Start with as little as ₹100. This fills in as you invest.</span></section>`;
   h+=referStrip();
   const sm=smart();
@@ -672,13 +671,13 @@ SC.home=()=>{
   h+=`<div class="sc" role="group" aria-label="Your shortcuts">${shortcuts().map(k=>`<button data-a="act" data-v="${k}"><span class="ic">${I[SCD[k][0]]}</span>${SCD[k][1]}</button>`).join('')}<button data-a="tab" data-v="explore"><span class="ic">${I.grid}</span>All</button></div>`;
   const n=IDX('NIFTY'),sx=D.indices.find(x=>x.s==='SENSEX')||n,b=IDX('BANKNIFTY');
   h+=`<button class="pulse" data-a="xgo" data-v="movers" aria-label="Markets: NIFTY ${spx(n.cp)}, SENSEX ${spx(sx.cp)}, Bank Nifty ${spx(b.cp)}. Open market movers">${[[n,'NIFTY'],[sx,'SENSEX'],[b,'Bank Nifty']].map(([x,l])=>`<span><span class="s12 muted">${l}</span><span class="s14 b">${sp(x.cp)}</span></span>`).join('')}<span class="s12 b" style="color:${mkt().open?'var(--up)':'var(--warn-fg)'};flex-direction:row;align-items:center;gap:4px"><span aria-hidden="true">●</span>${mkt().open?'Open':'Closed'}</span></button>`;
-  h+=assetStrip();
-  if(S.stocks.length){const top=[...S.stocks].sort((a,b_)=>Math.abs(b_.q*BY[b_.s].c)-Math.abs(a.q*BY[a.s].c)).slice(0,3);
-    h+=`<section class="sec"><div class="hrow"><h2 class="h2">Your stocks today</h2><button class="link" data-a="go" data-v="holdings">All holdings</button></div><div class="list">${top.map(x=>{const k=BY[x.s];return `<button class="item" data-a="go" data-v="stock:${x.s}"><div class="grow"><div class="t">${x.s}</div><div class="d">${x.q} shares · ${inr(x.q*k.p,0)}</div></div><div class="r"><div class="s15 b ${k.c>=0?'up':'down'}">${sinr(x.q*k.c)}</div><div class="s12">${sp(k.cp)}</div></div></button>`}).join('')}</div></section>`}
-  const w=S.watch.filter(x=>!held(x)).slice(0,4);
+    h+=portSection();
+  if(false&&S.stocks.length){const top=[...S.stocks].sort((a,b_)=>Math.abs(b_.q*BY[b_.s].c)-Math.abs(a.q*BY[a.s].c)).slice(0,3);
+    h+=`<section class="sec"><div class="hrow"><h2 class="h2">Your stocks today</h2><button class="link" data-a="tab" data-v="portfolio">Portfolio</button></div><div class="list">${top.map(x=>{const k=BY[x.s];return `<button class="item" data-a="go" data-v="stock:${x.s}"><div class="grow"><div class="t">${x.s}</div><div class="d">${x.q} shares · ${inr(x.q*k.p,0)}</div></div><div class="r"><div class="s15 b ${k.c>=0?'up':'down'}">${sinr(x.q*k.c)}</div><div class="s12">${sp(k.cp)}</div></div></button>`}).join('')}</div></section>`}
+  const w=[];
   if(w.length)h+=`<section class="sec"><div class="hrow"><h2 class="h2">Watchlist</h2><button class="link" data-a="go" data-v="watch">All lists</button></div><div class="list">${w.map(x=>stockRow(x)).join('')}</div></section>`;
   h+=homeLearn();
-  return {body:h,nav:true,now:'Home answers four questions in the first view: how is my money, what needs me now (one card), what do I usually do (five shortcuts that learn from use, plus All), and how is the market (one line). No Buy buttons in lists: tap a row, buy on the stock page.'};
+  return {body:h,nav:true,now:'Home is also your portfolio: money and how it compares, one thing to do, shortcuts and the market, then Holdings, Insights, Orders, SIPs and Reports as small tabs.  Before: your money and how it compares, one thing to do, your shortcuts, the market in one line and your stocks today. Home answers four questions in the first view: how is my money, what needs me now (one card), what do I usually do (five shortcuts that learn from use, plus All), and how is the market (one line). No Buy buttons in lists: tap a row, buy on the stock page.'};
 };
 const FCATS=['All','Index','Large cap','Flexi cap','Large & mid','Mid cap','Small cap','Tax saver','Hybrid','Debt','Gold','Sector'];
 const cmpBtn=(t,id)=>{const on=S.cmp.t===t&&S.cmp.ids.includes(id);return `<button class="ib" data-a="cmpt" data-v="${t}|${id}" aria-pressed="${on}" aria-label="${on?'Remove from':'Add to'} compare" style="color:${on?'var(--accent)':'var(--muted)'}">${on?I.check:I.add}</button>`};
@@ -821,8 +820,7 @@ SC.insights=()=>{
   const d=doing(),al=alerts(),g=gaps(),cur=current();
   let h=`<div class="pad" style="padding-top:18px;display:flex;flex-direction:column;gap:12px"><div class="hrow"><div class="row" style="gap:2px"><button class="ib" data-a="tab" data-v="home" aria-label="Back to Home" style="margin-left:-12px">${I.back}</button><h1 class="h1">Insights</h1></div><span class="s12 muted">NSE · ${dateL(D.asOf)}${D.asOfTime?' '+D.asOfTime:''}</span></div>
   <form class="ask" data-f="ask"><input id="askq" placeholder="Ask about your money or the market" aria-label="Ask Kosh" autocomplete="off"><button class="btn sm pri" type="submit">Ask</button></form>
-  <button class="card hrow" data-a="go" data-v="assets" style="text-align:left;color:var(--fg)"><span><span class="s15 b" style="display:block">Returns across asset classes</span><span class="s13 muted">And where to put money in a market like this</span></span>${chevI}</button>
-  <div class="qchips" role="group" aria-label="Suggested questions">${['Where should I invest now?','How is the market today?','How are my stocks doing?','Which stocks pass Buffett checks?','What is PCR?','How much did I save?'].map(x=>`<button data-a="askq" data-v="${x}">${x}</button>`).join('')}</div>
+  <div class="qchips" role="group" aria-label="Suggested questions">${['Where should I invest now?','How are my stocks doing?','How much did I save?'].map(x=>`<button data-a="askq" data-v="${x}">${x}</button>`).join('')}</div>
   ${S.chat.length?`<div class="chat" aria-live="polite">${S.chat.slice(-4).map(m=>m.me?`<div class="bub me">${esc(m.me)}</div>`:`<div class="bub ai">${m.h}${m.a.length?`<div class="row">${m.a.map(x=>`<button class="btn sm" data-a="${x[1]}" data-v="${x[2]}">${x[0]}</button>`).join('')}</div>`:''}</div>`).join('')}<span class="s12 muted">Built from your account and NSE data. Rule-based in this demo.</span></div>`:''}</div>`;
   h+=`<section class="sec" id="j-doing"><h2 class="h2">How your stocks are doing</h2>`;
   if(d){
@@ -947,6 +945,7 @@ SC.profile=()=>{
    ${S.aa?row('link','Bank data via Account Aggregator','<button class="btn sm danger" data-a="revoke">Revoke</button>'):row('link','Link bank for Money check',chevI,'act','money')}
    ${row('gift','Refer a friend',chevI,'act','refer')}
    ${row('receipt','Reports and tax',chevI,'tab','reports')}
+   ${row('gift','Rewards and offers',chevI,'go','rewards')}
    ${row('help','Help centre',chevI,'go','help')}
    ${row('flag','Raise a complaint',chevI,'sheet','complaint')}</div></section>`,now:'Profile, from the avatar: help first, then settings. One account for everything; F&amp;O opens after a one-time risk note.'};
 };
@@ -1192,7 +1191,7 @@ function render(reset){
   scr.innerHTML=`<div class="zoom">${r.body}</div>`;
   $('foot').innerHTML=r.foot||'';$('foot').hidden=!r.foot;if(r.slide)bindSlide(r.slide,'F');
   $('nav').hidden=!r.nav;
-  const L=T[S.lang],tabs=[['home',I.home],['explore',I.pie],['trade',I.bolt],['portfolio',I.case],['money',I.wallet]];$('nav').style.gridTemplateColumns=`repeat(${tabs.length},minmax(0,1fr))`;$('nav').innerHTML=tabs.map(([k,ic])=>`<button data-a="tab" data-v="${k}" ${S.tab===k&&!S.stack.length?'aria-current="page"':''}>${ic}${L[k]}${k==='activity'&&S.orders.some(o=>['queued','mandate'].includes(o.st))?'':''}</button>`).join('');
+  const L=T[S.lang],tabs=[['home',I.home],['explore',I.pie],['trade',I.bolt],['money',I.wallet]];$('nav').style.gridTemplateColumns=`repeat(${tabs.length},minmax(0,1fr))`;$('nav').innerHTML=tabs.map(([k,ic])=>`<button data-a="tab" data-v="${k}" ${S.tab===k&&!S.stack.length?'aria-current="page"':''}>${ic}${L[k]}${k==='activity'&&S.orders.some(o=>['queued','mandate'].includes(o.st))?'':''}</button>`).join('');
   scr.scrollTop=reset?0:y;
   placeToast();
   document.querySelectorAll('.stabs').forEach(t=>{const b=t.querySelector('[aria-pressed="true"]');if(b)t.scrollLeft=Math.max(0,b.offsetLeft-t.clientWidth/2+b.offsetWidth/2)});
@@ -1214,11 +1213,11 @@ function placeToast(){$('toast').style.bottom=(!$('foot').hidden?$('foot').offse
 let tt;function toast(m,act){const e=$('toast');e.innerHTML=`<span>${m}</span>${act?`<button data-a="${act.a}" data-v="${act.v}">${act.l}</button>`:''}`;e.hidden=false;placeToast();clearTimeout(tt);tt=setTimeout(()=>e.hidden=true,act?6000:2600)}
 function go(s,p){S.sheet=null;S.stack.push({s,p});render(true)}
 function sheet(v){S.sheet=v;if(v)$('toast').hidden=true;renderSheet()}
-function jump(id){if((S.tab!=='portfolio'||S.pseg!=='ins')||S.stack.length){S.tab='portfolio';S.pseg='ins';S.stack=[];S.sheet=null;render(true)}const el=$('j-'+id);if(el)$('scr').scrollTo({top:el.offsetTop-8,behavior:'smooth'})}
+function jump(id){if((S.tab!=='home'||S.pseg!=='ins')||S.stack.length){S.tab='home';S.pseg='ins';S.stack=[];S.sheet=null;render(true)}const el=$('j-'+id);if(el)$('scr').scrollTo({top:el.offsetTop-8,behavior:'smooth'})}
 
 /* ---------- actions ---------- */
 const A={
-  tab:v=>{if(v==='insights'){v='portfolio';S.pseg='ins'}else if(v==='activity'){v='portfolio';S.pseg='orders'}else if(v==='reports'){v='portfolio';S.pseg='reports'}else if(v==='portfolio'&&!S.pseg)S.pseg='hold';S.tab=v;S.stack=[];S.sheet=null;render(true)},
+  tab:v=>{let f=0;if(v==='insights'){S.pseg='ins';f=1}else if(v==='activity'){S.pseg='orders';f=1}else if(v==='reports'){S.pseg='reports';f=1}else if(v==='portfolio'){f=1}if(['insights','activity','reports','portfolio'].includes(v))v='home';S.tab=v;S.stack=[];S.sheet=null;render(true);if(f)pfocus()},
   back:()=>{S.stack.pop();S.sheet=null;render(true)},
   go:v=>{const i=v.indexOf(':');go(i<0?v:v.slice(0,i),i<0?undefined:v.slice(i+1))},
   sheet:v=>sheet(v),
@@ -1262,7 +1261,7 @@ const A={
   pans:v=>{const [k,x]=v.split('|');S.pa[k]=x;S.pstep=(S.pstep||0)+1;renderSheet()},
   pback:()=>{S.pstep=Math.max(0,S.pstep-1);renderSheet()},
   pamt:v=>{S.pamt=+v;renderSheet()},
-  planact:()=>{if(!S.plan&&!S.pa.risk){A.plan();return}S.plan={...(S.pa.risk?S.pa:S.plan)};const sp=planSplit(ideal(S.plan),S.pamt||5000);sp.forEach(x=>addSip(x.id,x.a,10));sheet(null);S.tab='portfolio';S.pseg='orders';S.stack=[];render(true);toast(`${sp.length} SIPs started · ${inr(sp.reduce((a,b)=>a+b.a,0),0)}/mo`)},
+  planact:()=>{if(!S.plan&&!S.pa.risk){A.plan();return}S.plan={...(S.pa.risk?S.pa:S.plan)};const sp=planSplit(ideal(S.plan),S.pamt||5000);sp.forEach(x=>addSip(x.id,x.a,10));sheet(null);S.tab='home';S.pseg='orders';S.stack=[];render(true);toast(`${sp.length} SIPs started · ${inr(sp.reduce((a,b)=>a+b.a,0),0)}/mo`)},
   act:v=>{$('toast').hidden=true;if(SCD[v]){S.use=S.use||{};S.use[v]=(S.use[v]||0)+1}
     if(v==='add'){sheet('add');return}
     if(v==='withdraw'){sheet('withdraw');return}
@@ -1279,7 +1278,7 @@ const A={
     if(v==='ipos'){go('ipos');return}
     if(v==='fd'){S.fdx={bank:0,ten:1,amt:50000};sheet('fd')}
     if(v==='money'){if(S.aa)go('money');else{S.aastep=0;sheet('aa')}}
-    if(v==='ins'){S.tab='portfolio';S.pseg='ins';S.stack=[];S.sheet=null;render(true)}
+    if(v==='ins'){S.tab='home';S.pseg='ins';S.stack=[];S.sheet=null;render(true)}
     if(v==='refer')sheet('refer');
   },
   pmode:v=>{S.pick.mode=v;S.pick.amt=0;renderSheet()},
@@ -1348,16 +1347,16 @@ const A={
   restart:()=>{init(S.mode);render(true)},
   try:v=>{
     S.sheet=null;$('toast').hidden=true;
-    if(v==='doing'){if(S.mode==='new')init('investor');S.tab='portfolio';S.pseg='ins';S.stack=[];render(true);return}
-    if(v==='plan'){S.tab='portfolio';S.pseg='ins';S.stack=[];render(true);A.plan();return}
+    if(v==='doing'){if(S.mode==='new')init('investor');S.tab='home';S.pseg='ins';S.stack=[];render(true);return}
+    if(v==='plan'){S.tab='home';S.pseg='ins';S.stack=[];render(true);A.plan();return}
     if(['chain','strat','algo','fut'].includes(v)){S.tab='trade';S.tv=v;S.stack=[];render(true);if(!S.fnoAck)sheet('fno');return}
     if(v==='cmdt'){S.tab='trade';S.tv='cmd';S.stack=[];render(true);A.cxgo('0');return}
-    if(v==='ask'){S.tab='portfolio';S.pseg='ins';S.stack=[];render(true);ask('How is the market today?');return}
+    if(v==='ask'){S.tab='home';S.pseg='ins';S.stack=[];render(true);ask('How is the market today?');return}
     if(v==='basket'||v==='us'){S.tab='explore';S.xsec=v==='basket'?'baskets':'us';S.q='';S.stack=[];render(true);return}
     S.tab='home';S.stack=[];render(true);A.act(v);
   }
 };
-function ask(q){q=(q||'').trim();if(!q)return;const r=answer(q);S.chat.push({me:q},{h:r.h,a:r.a});if((S.tab!=='portfolio'||S.pseg!=='ins')||S.stack.length){S.tab='portfolio';S.pseg='ins';S.stack=[];S.sheet=null}render();const el=document.querySelector('.chat');if(el)$('scr').scrollTo({top:Math.max(0,el.offsetTop-120)})}
+function ask(q){q=(q||'').trim();if(!q)return;const r=answer(q);S.chat.push({me:q},{h:r.h,a:r.a});S.pseg='ins';if((S.tab!=='home'||S.pseg!=='ins')||S.stack.length){S.tab='home';S.pseg='ins';S.stack=[];S.sheet=null}render();const el=document.querySelector('.chat');if(el)$('scr').scrollTo({top:Math.max(0,el.offsetTop-120)})}
 document.addEventListener('submit',e=>{if(e.target.dataset.f==='ask'){e.preventDefault();ask($('askq').value)}});
 function addSip(id,amt,day){if(!S.funds.find(x=>x.id===id))S.funds.push({id,val:0,inv:0,pending:day});S.sips=S.sips.filter(x=>x.id!==id);S.sips.push({id,amt,day});S.orders.unshift({id:++S.oid,type:'sip',fund:id,amt,day,st:'active',fresh:1})}
 document.addEventListener('click',e=>{
@@ -2007,15 +2006,17 @@ function referStrip(){return `<section class="sec" style="margin-top:10px"><div 
 function homeLearn(){return `<section class="sec"><button class="card hrow" data-a="act" data-v="learn" style="text-align:left;color:var(--fg)"><span class="row" style="gap:12px"><span class="lic">${I.text}</span><span><span class="s15 b" style="display:block">Kosh School</span><span class="s13 muted">${(S.learned||[]).length?(S.learned||[]).length+' of '+LEARN.reduce((a,m)=>a+m[2].length,0)+' lessons done':'2-minute lessons on investing, tax and F&amp;O'}</span></span></span>${chevI}</button></section>`}
 function homeLearnOld(){const done=(S.learned||[]).length,all=LEARN.reduce((a,m)=>a+m[2].length,0);return `<section class="sec"><button class="card hrow" data-a="act" data-v="learn" style="text-align:left;color:var(--fg)"><span class="row" style="gap:12px"><span class="lic">${I.text}</span><span><span class="s15 b" style="display:block">Learn in 2 minutes</span><span class="s13 muted">${done?done+' of '+all+' lessons done':'Shares, funds, risk, tax and planning'}</span></span></span>${chevI}</button></section>`}
 const PSEG=[['hold','Holdings'],['ins','Insights'],['orders','Orders'],['sips','SIPs'],['reports','Reports']];
-function holdBody(){const p=port(),ext=S.ext||[],ev=ext.reduce((a,x)=>a+x.val,0),cur=current(),fpl=dayPnl();
-  return `<section class="pad stack" style="gap:4px"><span class="s13 muted">Total value${ev?' incl. funds held elsewhere':''}</span><span class="big">${inr(p.total+ev,0)}</span><span class="s13"><span class="b ${p.ret>=0?'up':'down'}">${sinr(p.ret)} overall</span><span class="muted"> · invested ${cpt(p.inv)}</span></span>${benchUI()}</section>
-  ${cur?`<section class="sec"><div class="card stack"><div class="hrow"><span class="s14 b">How it’s split</span><button class="link" data-a="act" data-v="assets" style="padding:0;min-height:32px">Suggested split</button></div>${mixBar(cur)}${mixLeg(cur)}</div></section>`:''}
-  ${S.stocks.length?`<section class="sec"><div class="hrow"><h2 class="h2">Stocks · ${cpt(p.sv)}</h2><span class="s12 muted">${S.stocks.length}</span></div><div class="list">${S.stocks.map(x=>{const k=BY[x.s],pl=x.q*(k.p-x.avg);return tRow(x.s,`${x.q} × ${inr(x.avg)} · <span class="${pl>=0?'up':'down'}">${sinr(pl)}</span>`)}).join('')}</div></section>`:''}
-  ${S.funds.length||ext.length?`<section class="sec"><div class="hrow"><h2 class="h2">Mutual funds · ${cpt(p.fv+ev)}</h2><span class="s12 muted">${S.funds.length+ext.length}</span></div><div class="list">${S.funds.map(f=>{const F=FUND[f.id],pl=f.val-f.inv,sp_=S.sips.find(x=>x.id===f.id);return `<button class="item" data-a="fund" data-v="${f.id}"><span class="lic">${I[F.ic]}</span><div class="grow"><div class="t">${F.s}</div><div class="d">${sp_?'SIP '+inr(sp_.amt,0)+'/mo':'One-time'}${f.val?' · '+rv(F.r['1Y'])+' 1Y':''}</div></div><div class="r">${f.val?`<div class="s15 b">${inr(f.val,0)}</div><div class="s12 ${pl>=0?'up':'down'}">${sinr(pl)}</div>`:`<span class="chip mod">Starts ${f.pending} Oct</span>`}</div></button>`}).join('')}${ext.map(x=>`<div class="item"><span class="lic">${I.link}</span><div class="grow"><div class="t">${x.n}</div><div class="d">Held at ${x.at} · imported</div></div><div class="r"><div class="s15 b">${inr(x.val,0)}</div><div class="s12 ${x.val>=x.inv?'up':'down'}">${sinr(x.val-x.inv)}</div></div></div>`).join('')}</div></section>`:''}
-  <section class="sec"><button class="card hrow" data-a="sheet" data-v="cas" style="text-align:left;color:var(--fg)"><span class="row" style="gap:12px"><span class="lic">${I.link}</span><span><span class="s15 b" style="display:block">${ext.length?'Refresh funds held elsewhere':'Import funds held elsewhere'}</span><span class="s13 muted">From your CAS: every fund and demat in your PAN, in one view</span></span></span>${chevI}</button></section>
-  ${S.pos.length?`<section class="sec"><button class="card hrow" data-a="tvgo" data-v="pos" style="text-align:left;color:var(--fg)"><span><span class="s15 b" style="display:block">F&amp;O positions · ${S.pos.length} open</span><span class="s13 muted">Today’s P&amp;L</span></span><span class="s15 bb ${fpl>=0?'up':'down'}">${sinr(fpl)}</span></button></section>`:''}
-  ${S.fds.length?`<section class="sec"><h2 class="h2">FDs · ${cpt(p.dv)}</h2><div class="list">${S.fds.map(x=>`<div class="item"><span class="lic ok">${I.bank}</span><div class="grow"><div class="t">${inr(x.amt,0)} · ${x.bank}</div><div class="d">${x.rate}% · ${x.ten} yr · gets ${inr(x.mat,0)}</div></div></div>`).join('')}</div></section>`:''}
-  ${!p.total&&!ev?'<div class="empty">Nothing here yet. Start with a ₹100 SIP.</div>':''}`}
+function holdBody(){const p=port(),ext=S.ext||[],ev=ext.reduce((a,x)=>a+x.val,0),fpl=dayPnl();
+  const cats=[['stocks','Stocks',p.sv,S.stocks.length],['funds','Funds',p.fv+ev,S.funds.length+ext.length],['fno','F&O',fpl,S.pos.length],['fd','FDs',p.dv,S.fds.length],['cash','Cash',S.cash,1]].filter(c=>c[3]);
+  const hc=cats.find(c=>c[0]===S.hcat)?S.hcat:(cats[0]||['stocks'])[0];
+  let list='';
+  if(hc==='stocks')list=S.stocks.map(x=>{const k=BY[x.s],pl=x.q*(k.p-x.avg);return `<button class="item" data-a="go" data-v="stock:${x.s}"><div class="grow"><div class="t">${x.s}</div><div class="d">${x.q} shares · ${sp(k.cp)} today</div></div><div class="r"><div class="s15 b">${inr(x.q*k.p,0)}</div><div class="s12 ${pl>=0?'up':'down'}">${sinr(pl)}</div></div></button>`}).join('');
+  if(hc==='funds')list=S.funds.map(f=>{const F=FUND[f.id],pl=f.val-f.inv;return `<button class="item" data-a="fund" data-v="${f.id}"><div class="grow"><div class="t">${F.s}</div><div class="d">${S.sips.find(x=>x.id===f.id)?'SIP running':'One-time'}</div></div><div class="r">${f.val?`<div class="s15 b">${inr(f.val,0)}</div><div class="s12 ${pl>=0?'up':'down'}">${sinr(pl)}</div>`:`<span class="chip mod">Starts ${f.pending} Oct</span>`}</div></button>`}).join('')+ext.map(x=>`<div class="item"><div class="grow"><div class="t">${x.n}</div><div class="d">Held at ${x.at}</div></div><div class="r"><div class="s15 b">${inr(x.val,0)}</div><div class="s12 ${x.val>=x.inv?'up':'down'}">${sinr(x.val-x.inv)}</div></div></div>`).join('');
+  if(hc==='fno')list=S.pos.map(l=>{const pl=legPnl(l);return `<button class="item" data-a="tvgo" data-v="pos"><div class="grow"><div class="t">${legName(l)}</div><div class="d">${l.side==='buy'?'Bought':'Sold'} ${l.lots} lot</div></div><div class="r s15 b ${pl>=0?'up':'down'}">${sinr(pl)}</div></button>`}).join('');
+  if(hc==='fd')list=S.fds.map(x=>`<div class="item"><div class="grow"><div class="t">${x.bank}</div><div class="d">${x.rate}% · ${x.ten} yr</div></div><div class="r"><div class="s15 b">${inr(x.amt,0)}</div><div class="s12 muted">gets ${cpt(x.mat)}</div></div></div>`).join('');
+  if(hc==='cash')list=`<button class="item" data-a="tab" data-v="money"><div class="grow"><div class="t">Kosh balance</div><div class="d">Add, withdraw and payments in Funding</div></div><div class="r s15 b">${inr(S.cash,0)}</div></button>`;
+  return `  ${cats.length?`<section class="sec" style="margin-top:6px"><div class="spills" role="tablist" aria-label="What you hold">${cats.map(c=>`<button class="${hc===c[0]?'pri':''}" role="tab" aria-selected="${hc===c[0]}" data-a="hcat" data-v="${c[0]}">${c[1]} · ${c[0]==='fno'?sinr(c[2]):cpt(c[2])}</button>`).join('')}</div><div class="list">${list}</div></section>`:'<div class="empty">Nothing here yet. Start with a ₹100 SIP.</div>'}
+  <section class="sec"><button class="link" data-a="sheet" data-v="cas" style="padding:0;min-height:36px;align-self:flex-start">${I.link.replace('<svg','<svg width="16" height="16" style="vertical-align:-3px;margin-right:4px"')}${ext.length?'Refresh funds held elsewhere':'Import funds held elsewhere (CAS)'}</button></section>`}
 function sipsBody(){const mf=S.sips,st=S.ssips,bk=S.orders.filter(o=>o.label&&o.label.startsWith('Basket SIP')&&o.st==='running'),tot=mf.reduce((a,x)=>a+x.amt,0)+st.reduce((a,x)=>a+(x.freq==='weekly'?x.amt*4.33:x.amt),0);
   const ctl=(t,id)=>`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn sm" data-a="sipc" data-v="${t}|${id}|step">${S.stepup&&S.stepup[t+id]?'Step-up on':'Step up 10%/yr'}</button><button class="btn sm" data-a="sipc" data-v="${t}|${id}|skip">Skip next</button><button class="btn sm" data-a="sipc" data-v="${t}|${id}|pause">${S.paused&&S.paused[t+id]?'Resume':'Pause'}</button><button class="btn sm" data-a="sipc" data-v="${t}|${id}|date">Change date</button><button class="btn sm danger" data-a="sipc" data-v="${t}|${id}|stop">Stop</button></div>`;
   const pz=(t,id)=>S.paused&&S.paused[t+id]?' · <span style="color:var(--warn-fg)">paused 1 month</span>':S.skipped&&S.skipped[t+id]?' · next one skipped':'';
@@ -2049,7 +2050,8 @@ SC.money=()=>{const blk=S.orders.filter(o=>o.type==='stock'&&o.st==='queued'&&o.
   <section class="sec"><div class="list"><button class="item" data-a="tab" data-v="reports"><span class="lic">${I.receipt}</span><div class="grow"><div class="t">Ledger and statements</div><div class="d">Every rupee in and out</div></div>${chevI}</button></div></section>`,
   now:'Funding: the money behind your trades. Balance and withdrawals, borrowing (MTF, loan against investments, personal loan) with what you owe, linked banks, UPI and every AutoPay.'}};
 Object.assign(A,{
-  pseg:v=>{S.pseg=v;render(true)},
+  hcat:v=>{S.hcat=v;render()},
+  pseg:v=>{S.pseg=v;render();pfocus()},
   casgo:()=>{S.ext=[{n:'Axis Bluechip Fund',at:'another app',inv:150000,val:171200},{n:'SBI Small Cap Fund',at:'another app',inv:80000,val:104300},{n:'ICICI Pru Liquid Fund',at:'your bank',inv:50000,val:53900}];sheet(null);render();toast('3 funds imported from your CAS')},
   sipc:v=>{const [t,id,op]=v.split('|'),k=t+id;S.paused=S.paused||{};S.skipped=S.skipped||{};S.stepup=S.stepup||{};
     if(op==='step'){S.stepup[k]=!S.stepup[k];toast(S.stepup[k]?'Step-up on: +10% every year':'Step-up off')}
@@ -2224,6 +2226,18 @@ Object.assign(A,{
   pxlim:v=>{const [side,p]=v.split('|'),X=pxInit();X.pend.push({side,p:+p,lots:X.lots});pxRefresh();toast(`Limit ${side} ${X.lots} @ ${num(+p)} placed`)},
   pxcancel:()=>{pxInit().pend=[];pxRefresh();toast('Pending orders cancelled')}
 });
+
+/* ---------- patch24: Portfolio lives inside Home ---------- */
+function portInner(){const g=S.pseg||'hold';let inner='';
+  if(g==='hold')inner=holdBody();
+  if(g==='orders')inner=SC.activity().body.replace(/^<div class="pad hrow" style="padding-top:18px"><h1 class="h1">Activity<\/h1>.*?<\/div><\/div>/,'');
+  if(g==='sips')inner=sipsBody();
+  if(g==='ins'){const st=S.stack;S.stack=[];inner=SC.insights().body.replace(/<div class="hrow"><div class="row" style="gap:2px"><button class="ib" data-a="tab" data-v="home".*?<h1 class="h1">Insights<\/h1><\/div>/s,'<div class="hrow">').replace('padding-top:18px;','padding-top:4px;');S.stack=st}
+  if(g==='reports'){const st=S.stack;S.stack=[];inner=SC.reports().body.replace('<div class="pad" style="padding-top:18px"><h1 class="h1">Reports and tax</h1></div>','');S.stack=st}
+  return inner}
+function portSection(){const g=S.pseg||'hold';return `<div class="pad" id="ptabs" style="margin-top:14px"><div class="stabs" role="tablist" aria-label="Your portfolio">${PSEG.map(([k,l])=>`<button role="tab" aria-selected="${g===k}" aria-pressed="${g===k}" data-a="pseg" data-v="${k}">${l}${k==='ins'&&insN()?` <span class="chip" style="font-size:11px;padding:0 6px;background:var(--down);color:#fff">${insN()}</span>`:''}</button>`).join('')}</div></div>${portInner()}`}
+function pfocus(){const el=document.getElementById('ptabs');if(el)$('scr').scrollTo({top:Math.max(0,el.offsetTop-8)})}
+SC.portfolio=()=>SC.home();
 
 LEARN.push(LEARN.shift());
 init('investor');render(true);
